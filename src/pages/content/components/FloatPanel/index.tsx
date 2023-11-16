@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FC } from "react";
-import { Card, FloatButton, Popover, Tree } from "antd";
+import { Card, FloatButton, Popover, Transfer, Tree } from "antd";
 import { getRecentlyAppId, getSessionId } from "../../utils";
 import { getPublishedFileDetails, getUserCollections } from "../../serives";
 import { useCollectionParse } from "./hook";
+import styles from "./index.module.scss";
+console.log(styles);
+
 const Compilations: FC<{ data: any[] }> = ({ data = [] }) => {
   const tranformData = useMemo(() => {
     return data;
@@ -16,13 +19,38 @@ const Compilations: FC<{ data: any[] }> = ({ data = [] }) => {
         style={{
           minHeight: 400,
           width: 300,
-          maxHeight: 800,
+          maxHeight: 600,
           overflow: "scroll",
         }}
       >
         <Tree treeData={tranformData} />
       </div>
     </Card>
+  );
+};
+const TreeTranfer: FC<{ collections: any[] }> = ({ collections = [] }) => {
+  return (
+    <Transfer
+      className={styles.transfer}
+      style={{ width: 600, height: 600 }}
+      listStyle={{ height: "100%" }}
+    >
+      {({ direction, onItemSelect, selectedKeys }) => {
+        if (direction === "left") {
+          return (
+            <div>
+              <Tree />
+            </div>
+          );
+        } else {
+          return (
+            <div style={{ height: "100%", overflow: "auto" }}>
+              <Tree treeData={collections} />
+            </div>
+          );
+        }
+      }}
+    </Transfer>
   );
 };
 function FloatPanel() {
@@ -53,7 +81,10 @@ function FloatPanel() {
   }, []);
   return (
     <div>
-      <Popover content={<Compilations data={collections} />} open={openPopover}>
+      <Popover
+        content={<TreeTranfer collections={collections} />}
+        open={openPopover}
+      >
         <FloatButton onClick={() => setOpenPopover((value) => !value)} />
       </Popover>
     </div>
