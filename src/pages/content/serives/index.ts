@@ -24,7 +24,31 @@ export const getUserCollections = (data: {
     "https://steamcommunity.com/sharedfiles/ajaxgetmycollections",
     {
       method: "post",
-      data: { ...data },
+      data,
+    }
+  );
+};
+// 添加物品到集合
+export const addItemToCollection = (rawData: {
+  publishedfileid: string;
+  targetPublishedfileid: string;
+  sessionId: string;
+  type: "add" | "remove";
+  title?: string;
+}) => {
+  const { publishedfileid, targetPublishedfileid, sessionId, type, title } =
+    rawData;
+  const data = {
+    sessionID: sessionId,
+    publishedfileid,
+  };
+  data[`collections[${targetPublishedfileid}][${type}]`] = true;
+  data[`collections[${targetPublishedfileid}][title]`] = title;
+  return request<any, any>(
+    "https://steamcommunity.com/sharedfiles/ajaxaddtocollections",
+    {
+      method: "post",
+      data: qs.stringify(data),
     }
   );
 };
