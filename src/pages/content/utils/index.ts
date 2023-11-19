@@ -105,3 +105,10 @@ export function deduplicateArrayByKey(array, key = "key") {
 
   return Object.values(deduplicatedArray);
 }
+export const setLocalStorage = (key: string, data: any) => {
+  window.localStorage.setItem(key, JSON.stringify(data));
+};
+export const getLocalStorage = (key: string) => {
+  const raw = window.localStorage.getItem(key);
+  if (raw) return JSON.parse(raw);
+};

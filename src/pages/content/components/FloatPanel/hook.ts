@@ -1,18 +1,10 @@
-import { useEffect, useState } from "react";
-import { getPublishedFileDetails } from "@pages/content/serives/index";
-export const useCollectionParse = (data: any) => {
-  if (!data.all_collections) return;
-  const { items } = data.all_collections;
-  const collections = [];
-  for (const key in items) {
-    const element = items[key];
-    element.key = element.publishedfileid;
-    collections.push(element);
-  }
-  return collections;
-};
-export const useAddCheck = () => {
-  const [checkedItems, setCheckedItems] = useState([]);
+import { useEffect, useInsertionEffect, useState } from "react";
+import { getLocalStorage, getUrlSearchParams } from "../../utils";
+import { getPublishedFileDetails } from "../../serives";
+export const useListenCheck = () => {
+  const [checkedItems, setCheckedItems] = useState(
+    getLocalStorage("shelper_checkedItems") || []
+  );
   function unCheckItem(key: string) {
     const keys = key.split("-");
     let publishedfileid;
@@ -29,29 +21,24 @@ export const useAddCheck = () => {
   }
   useEffect(() => {
     // 在所有的workshopItem的fileRating元素后面添加一个input check元素
-    const workshopItems = document.querySelectorAll(".workshopItem");
-    workshopItems.forEach((item) => {
-      const fileRating = item.querySelector(".fileRating");
-      const ugc = item.querySelector(".ugc");
-      const preImage = item.querySelector(".workshopItemPreviewImage");
-      const titleDom = item.querySelector(".workshopItemTitle");
+    const helper_mod_checks = document.querySelectorAll(
+      '[workshop_helper_flag="workshop_item_check"]'
+    );
 
-      const input = document.createElement("input");
-      const preview_url = preImage.getAttribute("src");
-      // 克隆ugc上的data-publishedfileid属性到input上
-      const publishedfileid = ugc.getAttribute("data-publishedfileid");
-      input.setAttribute("value", publishedfileid);
-      input.setAttribute("type", "checkbox");
-      input.setAttribute("class", "workshopItem__input");
-      input.setAttribute("id", `workshop_helper_${publishedfileid}`);
+    helper_mod_checks.forEach((checkEl) => {
+      const publishedfileid = checkEl.getAttribute(
+        "workshop_helper_publishedfileid"
+      );
+      const preview_url = checkEl.getAttribute("workshop_helper_preview_url");
+      const title = checkEl.getAttribute("workshop_helper_title");
       // 添加事件，监听checkbox的变化
-      input.addEventListener("change", async (e) => {
+      checkEl.addEventListener("change", async (e) => {
         // 如果选取了，就把data-publishedfileid对应的详情加到checkedItems中
         const { checked } = e.target as HTMLInputElement;
         if (checked) {
           setCheckedItems((prevItems) => [
             ...prevItems,
-            { key: publishedfileid, preview_url, title: titleDom.textContent },
+            { key: publishedfileid, preview_url, title },
           ]);
         } else {
           // 如果取消了，就把data-publishedfileid从checkedItems中删除
@@ -62,8 +49,63 @@ export const useAddCheck = () => {
           );
         }
       });
-      fileRating?.parentNode?.insertBefore(input, fileRating.nextSibling);
     });
   }, []);
   return { checkedItems, unCheckItem, setCheckedItems };
+};
+export const useEnhanceUI = () => {
+  const urlSearchParams = getUrlSearchParams();
+  const createAddChekcEl = (detail, initDom = null) => {
+    let createdEl = document.createElement("input");
+    if (initDom) {
+      createdEl = initDom;
+    }
+    createdEl.setAttribute(
+      "workshop_helper_publishedfileid",
+      detail.publishedfileid
+    );
+    createdEl.setAttribute("workshop_helper_preview_url", detail.preview_url);
+    createdEl.setAttribute("workshop_helper_title", detail.title);
+    createdEl.setAttribute("workshop_helper_flag", "workshop_item_check");
+    createdEl.setAttribute("type", "checkbox");
+    createdEl.setAttribute("class", "workshopItem__input");
+    createdEl.setAttribute("id", `workshop_helper_${detail.publishedfileid}`);
+    return createdEl;
+  };
+  useInsertionEffect(() => {
+    const id = urlSearchParams.get("id");
+    if (id) {
+      const parentEl = document.getElementById("ItemControls");
+      const initInput = document.createElement("input");
+      const span = document.createElement("span");
+      const titleDom = document.querySelector(".workshopItemTitle");
+      const preImage = document.querySelector("#previewImageMain");
+      const preview_url = preImage.getAttribute("src");
+      const input = createAddChekcEl(
+        { publishedfileid: id, preview_url, title: titleDom.textContent },
+        initInput
+      );
+      span.innerText = "添加到Steam-Helper";
+      input.classList.add("btn_workshop_helper");
+      parentEl.appendChild(input);
+      parentEl.appendChild(span);
+    }
+    // 在所有的workshopItem的fileRating元素后面添加一个input check元素
+    const workshopItems = document.querySelectorAll(".workshopItem");
+    workshopItems.forEach((item) => {
+      const fileRating = item.querySelector(".fileRating");
+      const ugc = item.querySelector(".ugc");
+      const preImage = item.querySelector(".workshopItemPreviewImage");
+      const titleDom = item.querySelector(".workshopItemTitle");
+      const preview_url = preImage.getAttribute("src");
+      // 克隆ugc上的data-publishedfileid属性到input上
+      const publishedfileid = ugc.getAttribute("data-publishedfileid");
+      const input = createAddChekcEl({
+        publishedfileid,
+        preview_url,
+        title: titleDom.textContent,
+      });
+      fileRating?.parentNode?.insertBefore(input, fileRating.nextSibling);
+    });
+  }, []);
 };

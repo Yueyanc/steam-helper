@@ -21,6 +21,9 @@ const manifest: chrome.runtime.ManifestV3 = {
   icons: {
     "128": "icon-128.png",
   },
+  externally_connectable: {
+    matches: ["https://steamcommunity.com/*"],
+  },
   content_scripts: [
     {
       matches: ["http://*/*", "https://*/*", "<all_urls>"],

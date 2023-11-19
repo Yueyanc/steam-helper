@@ -11,36 +11,30 @@ import {
   Space,
   Button,
   message,
-  TreeProps,
-  List,
 } from "antd";
-import { RightOutlined, LeftOutlined } from "@ant-design/icons";
 import {
   addTreeItem,
   deduplicateArrayByKey,
-  filterTreeItem,
+  getLocalStorage,
   getRecentlyAppId,
   getSessionId,
   getTreeItem,
-  getTreeItems,
   removeTreeItem,
+  setLocalStorage,
 } from "../../utils";
 import {
   addItemToCollection,
   getPublishedFileDetails,
   getUserCollections,
 } from "../../serives";
-import { useAddCheck, useCollectionParse } from "./hook";
+import { useEnhanceUI, useListenCheck } from "./hook";
+import { DeleteOutlined } from "@ant-design/icons";
 
-interface TreeNode {
-  title: string;
-  preview_url: string;
-  key: string;
-  childrenIds?: string[];
-  [key: string]: any;
-}
 // 把datasource的item渲染成左边有个预览图右边为title的组件
-const TransferItem: FC<{ data: any }> = ({ data }) => {
+const TransferItem: FC<{ data: any; onDelete?: () => void }> = ({
+  data,
+  onDelete = () => {},
+}) => {
   return (
     <div
       style={{
@@ -61,17 +55,30 @@ const TransferItem: FC<{ data: any }> = ({ data }) => {
       >
         {data.title}
       </div>
+      <Button
+        onClick={() => {
+          onDelete();
+        }}
+        icon={<DeleteOutlined />}
+      ></Button>
     </div>
   );
 };
 const TreeTransfer: FC<any> = () => {
+  const { checkedItems, setCheckedItems } = useListenCheck();
   const [treeSelect, setTreeSelect] = useState([]);
-  const [targetKeys, setTargetKeys] = useState([]);
+  const [targetKeys, setTargetKeys] = useState(
+    getLocalStorage("shelper_targetKeys") || []
+  );
   const appId = getRecentlyAppId();
   const sessionId = getSessionId();
-  const [collections, setCollections] = useState([]);
-  const [cacheItems, setCacheItems] = useState([]);
-  const { checkedItems, unCheckItem } = useAddCheck();
+  const [collections, setCollections] = useState(
+    getLocalStorage("shelper_collections") || []
+  );
+  const [cacheItems, setCacheItems] = useState(
+    getLocalStorage("shelper_cacheItems") || []
+  );
+
   const dataSource = useMemo(() => {
     return deduplicateArrayByKey(
       checkedItems.concat(
@@ -80,47 +87,63 @@ const TreeTransfer: FC<any> = () => {
       )
     );
   }, [checkedItems, collections, cacheItems]);
-
+  useEffect(() => {
+    setLocalStorage("shelper_checkedItems", checkedItems);
+    setLocalStorage("shelper_collections", collections);
+    setLocalStorage("shelper_cacheItems", cacheItems);
+    setLocalStorage("shelper_targetKeys", targetKeys);
+  }, [collections, cacheItems, checkedItems, targetKeys]);
+  const onLoadData: any = ({ childrenIds, key, children }) => {
+    if (!children?.length) {
+      return new Promise((resolve, reject) => {
+        getPublishedFileDetails({
+          itemcount: childrenIds.length,
+          publishedfileids: childrenIds,
+        })
+          .then((res) => {
+            const data = res.response.publishedfiledetails;
+            if (!data) {
+              reject(false);
+              return;
+            }
+            const children = data.map((item) => ({
+              key: `${key}-${item.publishedfileid}`,
+              title: item.title,
+              preview_url: item.preview_url,
+              isLeaf: true,
+              selectable: false,
+            }));
+            setTargetKeys((pre) => [
+              ...pre,
+              ...children.map((item) => item.key),
+            ]);
+            setCollections((pre) => addTreeItem(pre, key, ...children));
+            return resolve(true);
+          })
+          .catch(() => reject(false));
+      });
+    }
+    return Promise.resolve();
+  };
   useEffect(() => {
     getUserCollections({ appid: appId, sessionid: sessionId }).then(
       async (res) => {
         if (res.success === 1) {
-          const collection = useCollectionParse(res);
-          const initTargetKeys = [];
-          const collectionChilDetail = await Promise.all(
-            collection.map(async (item) => {
-              const result: any = {};
-              result.checkable = false;
-              result.key = item.publishedfileid;
-              result.preview_url = item.preview_url;
-              result.title = item.title;
-              const publishedfileids = item.children?.map(
-                (chil) => chil.publishedfileid
-              );
-              if (!publishedfileids) return result;
-              const publishedfileDetailsResponse =
-                await getPublishedFileDetails({
-                  itemcount: publishedfileids.length,
-                  publishedfileids: publishedfileids,
-                });
-              result.children =
-                publishedfileDetailsResponse.response.publishedfiledetails.map(
-                  (detail) => {
-                    const key = `${item.publishedfileid}-${detail.publishedfileid}`;
-                    initTargetKeys.push(key);
-                    return {
-                      title: detail.title,
-                      preview_url: detail.preview_url,
-                      selectable: false,
-                      key,
-                    };
-                  }
-                );
-              return result;
-            })
-          );
-          setTargetKeys(initTargetKeys);
-          setCollections(collectionChilDetail);
+          const items = res.all_collections.items;
+          console.log(items.length, collections.length);
+          if (Object.keys(items).length !== collections.length) {
+            setCollections(
+              Object.keys(items).map((key) => ({
+                key: items[key].publishedfileid,
+                title: items[key].title,
+                preview_url: items[key].preview_url,
+                checkable: false,
+                childrenIds: items[key].children.map(
+                  (chil) => chil.publishedfileid
+                ),
+              }))
+            );
+          }
         }
       }
     );
@@ -130,7 +153,16 @@ const TreeTransfer: FC<any> = () => {
       <Transfer
         targetKeys={targetKeys}
         dataSource={dataSource}
-        render={(item) => <TransferItem data={item} />}
+        render={(item: any) => (
+          <TransferItem
+            data={item}
+            onDelete={() => {
+              setCheckedItems((pre) =>
+                pre.filter((preItem) => preItem.key !== item.key)
+              );
+            }}
+          />
+        )}
         style={{ width: "fit-content", height: 600, minWidth: 700 }}
         listStyle={{ height: "100%" }}
         onChange={(targetKeys, direction, moveKeys) => {
@@ -138,11 +170,9 @@ const TreeTransfer: FC<any> = () => {
           if (direction === "right") {
             moveKeys.forEach((key) => {
               const keys = key.split("-");
-              let publishedfileid;
+              let publishedfileid = key;
               if (keys.length === 2) {
                 publishedfileid = keys[1];
-              } else {
-                publishedfileid = key;
               }
               if (!treeSelect[0]) {
                 message.warning("请选择合集");
@@ -159,10 +189,10 @@ const TreeTransfer: FC<any> = () => {
                   const newTreeNode = checkedItems
                     .concat(cacheItems)
                     .filter((item) => item.key === key)[0];
+                  if (!newTreeNode.isLeaf) newTreeNode.isLeaf = true;
                   setCollections(
                     addTreeItem(collections, treeSelect[0], newTreeNode)
                   );
-                  unCheckItem(key);
                 }
               });
             });
@@ -204,7 +234,7 @@ const TreeTransfer: FC<any> = () => {
           }
         }}
       >
-        {({ direction, onItemSelect, selectedKeys }) => {
+        {({ direction, onItemSelect }) => {
           if (direction === "right") {
             return (
               <div style={{ height: "100%", overflow: "auto" }}>
@@ -212,6 +242,7 @@ const TreeTransfer: FC<any> = () => {
                   <Button>新增合集</Button>
                 </Space>
                 <Tree
+                  loadData={onLoadData}
                   style={{ width: 300 }}
                   checkable
                   treeData={collections}
@@ -219,9 +250,11 @@ const TreeTransfer: FC<any> = () => {
                   onSelect={(value) => {
                     setTreeSelect(value);
                   }}
-                  titleRender={(item) => (
-                    <Space>
-                      <Image src={item.preview_url} width={60} />
+                  titleRender={(item: any) => (
+                    <Space style={{ minWidth: 180, padding: "5px 10px" }}>
+                      {item.isLeaf && (
+                        <Image src={item.preview_url} width={60} />
+                      )}
                       <span>{item.title}</span>
                     </Space>
                   )}
@@ -233,8 +266,6 @@ const TreeTransfer: FC<any> = () => {
                 />
               </div>
             );
-          } else {
-            return <Tree />;
           }
         }}
       </Transfer>
@@ -242,167 +273,13 @@ const TreeTransfer: FC<any> = () => {
   );
 };
 
-const TreeTransfer2: FC<any> = () => {
-  const appId = getRecentlyAppId();
-  const sessionId = getSessionId();
-  const [rightTreeSelect, setRightTreeSelect] = useState([]);
-  const [rightCheckedKeys, setRightCheckedKeys] = useState<any[]>([]);
-  const [leftCheckedKeys, setLeftCheckedKeys] = useState<any[]>([]);
-  const [leftDataSource, setLeftDataSource] = useState([]);
-  const [rightDataSource, setRightDataSource] = useState([]);
-
-  const onLoadData: any = ({ childrenIds, key }) => {
-    return new Promise((resolve, reject) => {
-      getPublishedFileDetails({
-        itemcount: childrenIds.length,
-        publishedfileids: childrenIds,
-      })
-        .then((res) => {
-          const data = res.response.publishedfiledetails;
-          if (!data) {
-            reject(false);
-            return;
-          }
-          const children = data.map((item) => ({
-            key: `${key}-${item.publishedfileid}`,
-            title: item.title,
-            preview_url: item.preview_url,
-            isLeaf: true,
-            selectable: false,
-          }));
-          setRightDataSource((pre) => addTreeItem(pre, key, ...children));
-          return resolve(true);
-        })
-        .catch(() => reject(false));
-    });
-  };
+function FloatPanel() {
+  const [openPopover, setOpenPopover] = useState(true);
 
   useEffect(() => {
-    getUserCollections({ appid: appId, sessionid: sessionId }).then((res) => {
-      if (res.success === 1) {
-        const items = res.all_collections.items;
-        setRightDataSource(
-          Object.keys(items).map((key) => ({
-            key: items[key].publishedfileid,
-            title: items[key].title,
-            preview_url: items[key].preview_url,
-            checkable: false,
-            childrenIds: items[key].children.map(
-              (chil) => chil.publishedfileid
-            ),
-          }))
-        );
-      }
-    });
+    setOpenPopover(getLocalStorage("shelper_openPopover"));
   }, []);
-  return (
-    <Image.PreviewGroup>
-      <div
-        style={{ height: 600, display: "flex", flexDirection: "row", gap: 10 }}
-      >
-        <div style={{ height: "100%", overflow: "auto", width: 320 }}>
-          <Tree
-            checkedKeys={leftCheckedKeys}
-            onCheck={(value) => {
-              if (value instanceof Array) setLeftCheckedKeys(value);
-            }}
-            checkable
-            treeData={leftDataSource}
-            titleRender={(item) => (
-              <Space>
-                <Image src={item.preview_url} width={60} />
-                <span>{item.title}</span>
-              </Space>
-            )}
-          />
-        </div>
-        <div style={{ alignSelf: "center" }}>
-          <Space direction="vertical">
-            <Button
-              onClick={async () => {
-                await leftCheckedKeys.map((key) => {
-                  let publishedfileid;
-                  const keys = key.split("-");
-                  keys.length > 1 ? (publishedfileid = keys[1]) : keys[0];
-                  return addItemToCollection({
-                    publishedfileid: publishedfileid,
-                    targetPublishedfileid: rightTreeSelect[0],
-                    sessionId,
-                    type: "add",
-                  });
-                });
-              }}
-            >
-              <RightOutlined size={16} />
-            </Button>
-            <Button
-              onClick={async () => {
-                await Promise.all(
-                  rightCheckedKeys.map((key) => {
-                    const keys = key.split("-");
-                    return addItemToCollection({
-                      publishedfileid: keys[1],
-                      targetPublishedfileid: keys[0],
-                      sessionId,
-                      type: "remove",
-                    });
-                  })
-                );
-
-                setLeftDataSource((pre) => {
-                  const movedNode = getTreeItems(
-                    rightDataSource,
-                    rightCheckedKeys
-                  );
-
-                  return [...pre, ...movedNode];
-                });
-                setRightDataSource((pre) => {
-                  return filterTreeItem(pre, rightCheckedKeys);
-                });
-              }}
-            >
-              <LeftOutlined />
-            </Button>
-          </Space>
-        </div>
-        <div
-          style={{
-            height: "100%",
-            overflow: "auto",
-            width: 320,
-            alignSelf: "flex-start",
-          }}
-        >
-          <Tree
-            style={{ width: 300 }}
-            checkedKeys={rightCheckedKeys}
-            selectedKeys={rightTreeSelect}
-            onSelect={(value) => {
-              setRightTreeSelect(value);
-            }}
-            checkable
-            selectable
-            titleRender={(item) => (
-              <Space>
-                <Image src={item.preview_url} width={60} />
-                <span>{item.title}</span>
-              </Space>
-            )}
-            onCheck={(value) => {
-              if (value instanceof Array) setRightCheckedKeys(value);
-            }}
-            loadData={onLoadData}
-            treeData={rightDataSource}
-          />
-        </div>
-      </div>
-    </Image.PreviewGroup>
-  );
-};
-function FloatPanel() {
-  const [openPopover, setOpenPopover] = useState(false);
-
+  useEnhanceUI();
   return (
     <ConfigProvider
       theme={{
@@ -418,11 +295,19 @@ function FloatPanel() {
       }}
     >
       <Popover
+        fresh
         style={{ zIndex: 999 }}
-        content={<TreeTransfer2 />}
+        content={<TreeTransfer />}
         open={openPopover}
       >
-        <FloatButton onClick={() => setOpenPopover((value) => !value)} />
+        <FloatButton
+          onClick={() =>
+            setOpenPopover((value) => {
+              setLocalStorage("shelper_openPopover", !value);
+              return !value;
+            })
+          }
+        />
       </Popover>
     </ConfigProvider>
   );
