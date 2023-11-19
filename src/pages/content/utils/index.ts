@@ -40,14 +40,26 @@ export function removeTreeItem(tree: TreeNode[], key) {
   // 返回新树
   return newTree;
 }
-export function addTreeItem(tree: TreeNode[], key, item) {
+export function filterTreeItem(tree: TreeNode[], keys: string[]) {
+  if (!tree) return [];
+  const newTree = tree.filter((item) => !keys.includes(item.key));
+  newTree.forEach((item) => {
+    if (!item.children) return;
+    item.children = filterTreeItem(item.children, keys);
+  });
+  return newTree;
+}
+
+export function addTreeItem(tree: TreeNode[], key, ...items) {
   if (!tree) return;
   const newTree = [...tree];
   for (let i = 0; i < newTree.length; i++) {
     const node = newTree[i];
     if (node.key === key) {
       node.children = node.children || [];
-      node.children.push(item);
+      items.forEach((item) => {
+        node.children.push(item);
+      });
       return newTree;
     }
   }
@@ -65,6 +77,21 @@ export function getTreeItem(tree: TreeNode[], key) {
       return children;
     }
   }
+}
+export function getTreeItems(tree: TreeNode[], keys: string[]) {
+  const results = [];
+  if (!tree) return results;
+  for (let i = 0; i < tree.length; i++) {
+    const node = tree[i];
+    if (keys.includes(node.key)) {
+      results.push(node);
+    }
+    const children = getTreeItems(node.children, keys);
+    if (children.length > 0) {
+      results.push(...children);
+    }
+  }
+  return results;
 }
 export function deduplicateArrayByKey(array, key = "key") {
   const deduplicatedArray = array.reduce((accumulator, current) => {
