@@ -1,7 +1,7 @@
 {
-  "name": "chrome-extension-boilerplate-react-vite",
-  "version": "0.0.1",
-  "description": "chrome extension boilerplate",
+  "name": "steam-workshop-helper",
+  "version": "1.0.0",
+  "description": "A chrome browser plugin that enhances the steam workshop  experience",
   "license": "MIT",
   "repository": {
     "type": "git",
