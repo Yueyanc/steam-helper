@@ -112,3 +112,8 @@ export const getLocalStorage = (key: string) => {
   const raw = window.localStorage.getItem(key);
   if (raw) return JSON.parse(raw);
 };
+export const clearLocalStorage = (key: string[]) => {
+  key.forEach((item) => {
+    window.localStorage.removeItem(item);
+  });
+};

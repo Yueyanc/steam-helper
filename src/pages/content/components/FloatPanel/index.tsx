@@ -14,6 +14,7 @@ import {
 } from "antd";
 import {
   addTreeItem,
+  clearLocalStorage,
   deduplicateArrayByKey,
   getLocalStorage,
   getRecentlyAppId,
@@ -239,7 +240,19 @@ const TreeTransfer: FC<any> = () => {
             return (
               <div style={{ height: "100%", overflow: "auto" }}>
                 <Space style={{ margin: "10px 10px" }}>
-                  <Button>新增合集</Button>
+                  <Button disabled>新增合集</Button>
+                  <Button
+                    onClick={() => {
+                      clearLocalStorage([
+                        "shelper_checkedItems",
+                        "shelper_targetKeys",
+                        "shelper_collections",
+                        "shelper_cacheItems",
+                      ]);
+                    }}
+                  >
+                    清除缓存
+                  </Button>
                 </Space>
                 <Tree
                   loadData={onLoadData}

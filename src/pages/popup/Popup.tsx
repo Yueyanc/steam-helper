@@ -1,37 +1,32 @@
-import React from "react";
-import logo from "@assets/img/logo.svg";
 import "@pages/popup/Popup.css";
-import useStorage from "@src/shared/hooks/useStorage";
-import exampleThemeStorage from "@src/shared/storages/exampleThemeStorage";
 import withSuspense from "@src/shared/hoc/withSuspense";
-
+import logo from "@assets/img/logo.png";
+import { useEffect, useState } from "react";
 const Popup = () => {
-  const theme = useStorage(exampleThemeStorage);
+  const [currentURL, setCurrentURL] = useState("");
+  useEffect(() => {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      const currentURL = tabs[0].url;
+      setCurrentURL(currentURL);
+    });
+  }, []);
 
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p className="text-lime-400">
-          Edit <code>src/pages/popup/Popup.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React!
-        </a>
-        <button
-          style={{
-            color: theme === "light" ? "#fff" : "#000",
-          }}
-          onClick={exampleThemeStorage.toggle}
-        >
-          Toggle theme: [{theme}]
-        </button>
-      </header>
+      <div className="app-container">
+        <div className="top-bar">
+          <img src={logo} className="logo" />
+          <div className="welcome-title">欢迎使用Steam Workshop helper</div>
+        </div>
+        <div>
+          当前页面:
+          {currentURL.includes("https://steamcommunity.com") ? (
+            <span className="enable">已启用</span>
+          ) : (
+            <span className="disable">无法使用</span>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
