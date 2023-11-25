@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
-import FloatPanel from "./components/FloatPanel";
+import SideDrawer from "./components/SideDrawer";
+import "./style.scss";
 const root = document.createElement("div");
 root.id = "steam-workshop-helper";
 
@@ -7,7 +8,7 @@ document.body.append(root);
 function App() {
   return (
     <div>
-      <FloatPanel />
+      <SideDrawer />
     </div>
   );
 }

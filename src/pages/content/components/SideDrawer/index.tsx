@@ -1,7 +1,9 @@
+import styles from "./index.module.scss";
 import { useEffect, useMemo, useState } from "react";
 import type { FC } from "react";
 import {
   FloatButton,
+  Drawer,
   Popover,
   Transfer,
   Tree,
@@ -28,7 +30,7 @@ import {
   getPublishedFileDetails,
   getUserCollections,
 } from "../../serives";
-import { useEnhanceUI, useListenCheck } from "../SideDrawer/hook";
+import { useEnhanceUI, useListenCheck, useReactiveUI } from "./hook";
 import { DeleteOutlined } from "@ant-design/icons";
 
 // 把datasource的item渲染成左边有个预览图右边为title的组件
@@ -285,14 +287,12 @@ const TreeTransfer: FC<any> = () => {
     </Image.PreviewGroup>
   );
 };
-
-function FloatPanel() {
-  const [openPopover, setOpenPopover] = useState(true);
-
-  useEffect(() => {
-    setOpenPopover(getLocalStorage("shelper_openPopover"));
-  }, []);
-  useEnhanceUI();
+const SideDrawer: React.FC<any> = () => {
+  const [open, setOpen] = useState(false);
+  const drawerClose = () => {
+    setOpen(false);
+  };
+  useReactiveUI();
   return (
     <ConfigProvider
       theme={{
@@ -307,22 +307,25 @@ function FloatPanel() {
         },
       }}
     >
-      <Popover
-        fresh
-        style={{ zIndex: 999 }}
-        content={<TreeTransfer />}
-        open={openPopover}
-      >
+      <div>
+        <Drawer
+          width={"auto"}
+          className={styles["drawer-container"]}
+          placement="right"
+          open={open}
+          closable={false}
+          onClose={drawerClose}
+          maskClosable
+        >
+          <TreeTransfer />
+        </Drawer>
         <FloatButton
-          onClick={() =>
-            setOpenPopover((value) => {
-              setLocalStorage("shelper_openPopover", !value);
-              return !value;
-            })
-          }
+          onClick={() => {
+            setOpen(true);
+          }}
         />
-      </Popover>
+      </div>
     </ConfigProvider>
   );
-}
-export default FloatPanel;
+};
+export default SideDrawer;

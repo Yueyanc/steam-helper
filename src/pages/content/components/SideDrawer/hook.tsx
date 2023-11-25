@@ -1,6 +1,15 @@
-import { useEffect, useInsertionEffect, useState } from "react";
+import {
+  useEffect,
+  useInsertionEffect,
+  useLayoutEffect,
+  useState,
+} from "react";
 import { getLocalStorage, getUrlSearchParams } from "../../utils";
 import { getPublishedFileDetails } from "../../serives";
+import { PlusOutlined } from "@ant-design/icons";
+import { render } from "react-dom";
+import { Button } from "antd";
+import styles from "./index.module.scss";
 export const useListenCheck = () => {
   const [checkedItems, setCheckedItems] = useState(
     getLocalStorage("shelper_checkedItems") || []
@@ -107,5 +116,33 @@ export const useEnhanceUI = () => {
       });
       fileRating?.parentNode?.insertBefore(input, fileRating.nextSibling);
     });
+  }, []);
+};
+const HoverItem = ({ holder }: any) => {
+  const [visible, setVisible] = useState(false);
+  useLayoutEffect(() => {
+    holder.addEventListener("mouseenter", () => {
+      setVisible(true);
+    });
+    holder.addEventListener("mouseleave", () => {
+      setVisible(false);
+    });
+  }, []);
+  return (
+    <div className={styles["hover-add-btn"]}>
+      {visible && <Button type="primary" icon={<PlusOutlined />} />}
+    </div>
+  );
+};
+export const useReactiveUI = () => {
+  useLayoutEffect(() => {
+    const rawItemEls = document.querySelectorAll(".workshopItem");
+    rawItemEls.forEach((item) => {
+      const div = document.createElement("div");
+      const holder = item.querySelector(".workshopItemPreviewHolder");
+      holder.appendChild(div);
+      render(<HoverItem holder={holder} />, div);
+    });
+    console.log(rawItemEls);
   }, []);
 };
