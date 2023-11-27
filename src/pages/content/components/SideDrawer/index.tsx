@@ -13,6 +13,7 @@ import {
   Space,
   Button,
   message,
+  Modal,
 } from "antd";
 import {
   clearLocalStorage,
@@ -26,6 +27,7 @@ import {
   addItemToCollection,
   getAllUserSubscribedFiles,
   getPublishedFileDetails,
+  getPublishedFilePageData,
   getUserCollections,
 } from "../../serives";
 import { useReactiveUI } from "./hook";
@@ -46,7 +48,7 @@ const TransferItem: FC<{ data: any; onDelete?: () => void }> = ({
         alignItems: "center",
       }}
     >
-      <Image src={data.preview_url} width={80} />
+      {data.preview_url && <Image src={data.preview_url} width={80} />}
       <div
         style={{
           display: "inline-block",
@@ -196,18 +198,73 @@ const TreeTransfer: FC<any> = () => {
       <Transfer
         targetKeys={targetKeys}
         dataSource={dataSource}
-        render={(item: any) => <TransferItem data={item} onDelete={() => {}} />}
+        render={(item: any) => (
+          <TransferItem
+            data={item}
+            onDelete={() => {
+              setDataSource((pre) => pre.filter((preItem) => preItem !== item));
+            }}
+          />
+        )}
         style={{ width: "fit-content", height: 600, minWidth: 700 }}
         listStyle={{ height: "100%" }}
-        onChange={(targetKeys, direction, moveKeys) => {
+        onChange={async (targetKeys, direction, moveKeys) => {
           // 向合集中添加Mods
           if (direction === "right") {
-            moveKeys.forEach((key) => {
+            moveKeys.forEach(async (key) => {
               const publishedfileid = key.split("-")[0];
+              const currentMod = dataSource.find((item) => item.key === key);
+              let requiredResults = [];
               if (!treeSelect[0]) {
                 message.warning("请选择合集");
                 return;
               }
+              const { requiredItems } = await getPublishedFilePageData({
+                id: publishedfileid,
+              });
+              if (requiredItems?.length) {
+                await new Promise((resolve, reject) => {
+                  Modal.confirm({
+                    title: `${currentMod.title}有依赖项，是否一并添加？`,
+                    content: (
+                      <div>
+                        <img src={currentMod.preview_url} width={200} />
+                        {requiredItems.map((item, index) => (
+                          <div key={index}>{item.title}</div>
+                        ))}
+                      </div>
+                    ),
+                    onOk: async () => {
+                      requiredResults = await Promise.all(
+                        requiredItems.map((item) => {
+                          return addItemToCollection({
+                            publishedfileid: item.id,
+                            targetPublishedfileid: treeSelect[0],
+                            sessionId,
+                            type: "add",
+                          }).then((res) => {
+                            if (res.success === 1) {
+                              return item;
+                            } else {
+                              message.warning(
+                                `${item.title}添加失败,请手动添加`
+                              );
+                              return false;
+                            }
+                          });
+                        })
+                      );
+
+                      resolve(true);
+                    },
+                    onCancel: () => {
+                      resolve(false);
+                    },
+                  });
+                });
+              }
+              console.log("????");
+
               addItemToCollection({
                 publishedfileid: publishedfileid,
                 targetPublishedfileid: treeSelect[0],
@@ -223,6 +280,19 @@ const TreeTransfer: FC<any> = () => {
                     );
                     childrenNode.collectionId = treeSelect[0];
                     parentNode.addChild(tree.parse(childrenNode));
+                    const requiredSuccessed = requiredResults.filter(
+                      (item) => item
+                    );
+                    console.log(requiredSuccessed);
+
+                    if (requiredSuccessed.length > 0) {
+                      requiredSuccessed.forEach((item) => {
+                        item.collectionId = treeSelect[0];
+                        item.isLeaf = true;
+                        parentNode.addChild(tree.parse(item));
+                      });
+                    }
+
                     return [...pre];
                   });
                 }
@@ -286,7 +356,7 @@ const TreeTransfer: FC<any> = () => {
                   }}
                   titleRender={(item: any) => (
                     <Space style={{ minWidth: 180, padding: "5px 10px" }}>
-                      {item.isLeaf && (
+                      {item.isLeaf && item.preview_url && (
                         <Image src={item.preview_url} width={60} />
                       )}
                       <span>{item.title}</span>
@@ -312,7 +382,9 @@ const SideDrawer: React.FC<any> = () => {
   const drawerClose = () => {
     setOpen(false);
   };
-
+  getPublishedFilePageData({ id: "3014906877" }).then((res) => {
+    console.log(res);
+  });
   return (
     <ConfigProvider
       theme={{

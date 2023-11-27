@@ -3,6 +3,7 @@ import { PlusOutlined } from "@ant-design/icons";
 import { render } from "react-dom";
 import { Button, Space } from "antd";
 import styles from "./index.module.scss";
+import { getPublishedFileDetails } from "../../serives";
 const WorkshopHandleRow: React.FC<{ onAdd?: () => void }> = ({
   onAdd = () => {},
 }) => {
@@ -34,6 +35,12 @@ export const useReactiveUI = ({ add }: { add: (item: any) => void }) => {
       render(
         <WorkshopHandleRow
           onAdd={() => {
+            getPublishedFileDetails({
+              itemcount: 1,
+              publishedfileids: [publishId],
+            }).then((res) => {
+              console.log(res);
+            });
             add({
               preview_url: previewImageSrc,
               isLeaf: true,

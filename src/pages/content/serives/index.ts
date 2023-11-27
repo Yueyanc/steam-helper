@@ -6,7 +6,6 @@ export const getPublishedFileDetails = (data: {
   publishedfileids: string[];
   access_token?: string;
 }) => {
-  data.access_token = "ef608c2b8130e96f39629b06645d7721";
   return request<any, any>(
     "https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/",
     {
@@ -16,6 +15,30 @@ export const getPublishedFileDetails = (data: {
     }
   );
 };
+export const getPublishedFilePageData = ({ id }: { id: string }) => {
+  return request<any, any>(
+    `https://steamcommunity.com/sharedfiles/filedetails/?id=${id}`
+  ).then((res) => {
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = res;
+    const screenshots = Array.from(
+      tempDiv.querySelectorAll(".highlight_strip_screenshot")
+    ).map((item) => {
+      const img = item.querySelector("img");
+      return img.getAttribute("src");
+    });
+    const requiredItems = Array.from(
+      tempDiv.querySelector("#RequiredItems").querySelectorAll("a")
+    ).map((item) => {
+      const href = item.getAttribute("href");
+      const title = item.querySelector(".requiredItem").textContent;
+      const id = href.split("id=")[1];
+      return { id, title };
+    });
+    return { requiredItems, screenshots };
+  });
+};
+
 export const getUserId = () => {
   return request<any, any>("https://steamcommunity.com/", {
     method: "get",
