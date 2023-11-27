@@ -6,6 +6,7 @@ import customDynamicImport from "./utils/plugins/custom-dynamic-import";
 import addHmr from "./utils/plugins/add-hmr";
 import watchRebuild from "./utils/plugins/watch-rebuild";
 import manifest from "./manifest";
+import autoImportCss from "./utils/plugins/auto-import-css";
 
 const rootDir = resolve(__dirname);
 const srcDir = resolve(rootDir, "src");
@@ -13,7 +14,7 @@ const pagesDir = resolve(srcDir, "pages");
 const assetsDir = resolve(srcDir, "assets");
 const outDir = resolve(rootDir, "dist");
 const publicDir = resolve(rootDir, "public");
-
+let cacheInvalidationKey: string = generateKey();
 const isDev = process.env.__DEV__ === "true";
 const isProduction = !isDev;
 
@@ -36,6 +37,7 @@ export default defineConfig({
       contentScriptCssKey: regenerateCacheInvalidationKey(),
     }),
     customDynamicImport(),
+    autoImportCss({ cssKey: cacheInvalidationKey }),
     addHmr({ background: enableHmrInBackgroundScript, view: true }),
     watchRebuild(),
   ],
@@ -50,7 +52,6 @@ export default defineConfig({
       input: {
         content: resolve(pagesDir, "content", "index.ts"),
         background: resolve(pagesDir, "background", "index.ts"),
-        // contentStyle: resolve(pagesDir, "content", "style.scss"),
         popup: resolve(pagesDir, "popup", "index.html"),
       },
       output: {
@@ -77,7 +78,6 @@ function firstUpperCase(str: string) {
   return str.toLowerCase().replace(firstAlphabet, (L) => L.toUpperCase());
 }
 
-let cacheInvalidationKey: string = generateKey();
 function regenerateCacheInvalidationKey() {
   cacheInvalidationKey = generateKey();
   return cacheInvalidationKey;

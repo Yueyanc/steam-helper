@@ -38,6 +38,7 @@ specifiers:
   react-dom: 18.2.0
   rollup: 2.79.1
   sass: 1.62.1
+  tree-model: ^1.0.7
   ts-jest: 29.0.2
   ts-loader: 9.4.2
   typescript: 4.8.4
@@ -55,6 +56,7 @@ dependencies:
   qs: registry.npmmirror.com/qs/6.11.2
   react: registry.npmmirror.com/react/18.2.0
   react-dom: registry.npmmirror.com/react-dom/18.2.0_react@18.2.0
+  tree-model: registry.npmmirror.com/tree-model/1.0.7
 
 devDependencies:
   '@rollup/plugin-typescript': registry.npmmirror.com/@rollup/plugin-typescript/8.5.0_gypgyaqhine6mwjfvh7icfhviq
@@ -3512,6 +3514,12 @@ packages:
       to-regex-range: registry.npmmirror.com/to-regex-range/5.0.1
     dev: true
 
+  registry.npmmirror.com/find-insert-index/0.0.1:
+    resolution: {integrity: sha512-eIqFuQzY7XwpAJ3sHWKFNGLx1nm3w/IhmFASETcx5sUuCaOUd3xDqRK/376SzXMVVJQaJUCPlS7L841T0xpFjQ==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/find-insert-index/-/find-insert-index-0.0.1.tgz}
+    name: find-insert-index
+    version: 0.0.1
+    dev: false
+
   registry.npmmirror.com/find-up/4.1.0:
     resolution: {integrity: sha512-PpOwAdQ/YlXQ2vj8a3h8IipDuYRi3wceVQQGYWxNINccq40Anw7BlsEXCMbt1Zt+OLA6Fq9suIpIWD0OsnISlw==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/find-up/-/find-up-4.1.0.tgz}
     name: find-up
@@ -5094,6 +5102,12 @@ packages:
     version: 1.4.1
     engines: {node: '>= 8'}
     dev: true
+
+  registry.npmmirror.com/mergesort/0.0.1:
+    resolution: {integrity: sha512-WKghTBzqAvTt9rG5TWS78Dmk2kCCL9VkkX8Zi9kKfJ4iqYpvcGGpeYtkhPHa9NZAPLivZiZsdO/LBG3ENayDmQ==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/mergesort/-/mergesort-0.0.1.tgz}
+    name: mergesort
+    version: 0.0.1
+    dev: false
 
   registry.npmmirror.com/micromatch/4.0.5:
     resolution: {integrity: sha512-DMy+ERcEW2q8Z2Po+WNXuw3c5YaUSFjAO5GsJqfEl7UjvtIuFKO6ZrKvcItdy98dwFI2N1tg3zNIdKaQT+aNdA==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/micromatch/-/micromatch-4.0.5.tgz}
@@ -6969,6 +6983,15 @@ packages:
     dependencies:
       punycode: registry.npmmirror.com/punycode/2.3.0
     dev: true
+
+  registry.npmmirror.com/tree-model/1.0.7:
+    resolution: {integrity: sha512-oP4LUbCVtD2gcjcRaeI4L5hY60tHzB+AK/bthIJ2Pq1EUUOio5/xFzPWnGoBZlhtqpqbOkhFDzKIwKLOn0kccQ==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/tree-model/-/tree-model-1.0.7.tgz}
+    name: tree-model
+    version: 1.0.7
+    dependencies:
+      find-insert-index: registry.npmmirror.com/find-insert-index/0.0.1
+      mergesort: registry.npmmirror.com/mergesort/0.0.1
+    dev: false
 
   registry.npmmirror.com/ts-jest/29.0.2_avoqbs4x2yhgzrnavpiszqhaye:
     resolution: {integrity: sha512-P03IUItnAjG6RkJXtjjD5pu0TryQFOwcb1YKmW63rO19V0UFqL3wiXZrmR5D7qYjI98btzIOAcYafLZ0GHAcQg==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/ts-jest/-/ts-jest-29.0.2.tgz}

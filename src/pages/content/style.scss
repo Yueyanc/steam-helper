@@ -1,10 +1,4 @@
-@import "@assets/style/theme.scss";
-
-// CSS that can pollute global styles. Use it with caution.
-// If you use ShodowRoot for style pollution, this style will not be applied inside the content script.
-.content-view-style-may-be-not-working {
-  font-size: 30px;
-}
-.ant-transfer-list-body-customize-wrapper {
+.ant-transfer-list-body {
   height: 100%;
+  overflow: auto;
 }

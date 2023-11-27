@@ -1,5 +1,5 @@
 import styles from "./index.module.scss";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useId } from "react";
 import type { FC } from "react";
 import {
   FloatButton,
@@ -15,24 +15,24 @@ import {
   message,
 } from "antd";
 import {
-  addTreeItem,
   clearLocalStorage,
-  deduplicateArrayByKey,
+  findTreeNode,
   getLocalStorage,
   getRecentlyAppId,
   getSessionId,
-  getTreeItem,
-  removeTreeItem,
   setLocalStorage,
 } from "../../utils";
 import {
   addItemToCollection,
+  getAllUserSubscribedFiles,
   getPublishedFileDetails,
   getUserCollections,
 } from "../../serives";
-import { useEnhanceUI, useListenCheck, useReactiveUI } from "./hook";
+import { useReactiveUI } from "./hook";
 import { DeleteOutlined } from "@ant-design/icons";
+import TreeModel from "tree-model";
 
+const tree = new TreeModel();
 // 把datasource的item渲染成左边有个预览图右边为title的组件
 const TransferItem: FC<{ data: any; onDelete?: () => void }> = ({
   data,
@@ -68,83 +68,92 @@ const TransferItem: FC<{ data: any; onDelete?: () => void }> = ({
   );
 };
 const TreeTransfer: FC<any> = () => {
-  const { checkedItems, setCheckedItems } = useListenCheck();
-  const [treeSelect, setTreeSelect] = useState([]);
-  const [targetKeys, setTargetKeys] = useState(
-    getLocalStorage("shelper_targetKeys") || []
-  );
   const appId = getRecentlyAppId();
   const sessionId = getSessionId();
-  const [collections, setCollections] = useState(
-    getLocalStorage("shelper_collections") || []
+  const [treeSelect, setTreeSelect] = useState([]);
+  const [targetKeys, setTargetKeys] = useState([]);
+  const [collectionTree, setCollectionTree] = useState<any[]>([]);
+  const [loadingModsProgress, setLoadingModsProgress] = useState<any>({});
+  const [dataSource, setDataSource] = useState<any[]>(
+    getLocalStorage("shelper_dataSource") || []
   );
-  const [cacheItems, setCacheItems] = useState(
-    getLocalStorage("shelper_cacheItems") || []
-  );
-
-  const dataSource = useMemo(() => {
-    return deduplicateArrayByKey(
-      checkedItems.concat(
-        collections.map((item) => item.children || []).flat(),
-        cacheItems
-      )
-    );
-  }, [checkedItems, collections, cacheItems]);
+  const collections = useMemo(() => {
+    return collectionTree.map((item) => item.model);
+  }, [collectionTree]);
+  // 添加页面操作按钮
+  useReactiveUI({
+    add: (item: any) => {
+      setDataSource((pre) => [...pre, item]);
+    },
+  });
+  // 持久化储存已选Mods
   useEffect(() => {
-    setLocalStorage("shelper_checkedItems", checkedItems);
-    setLocalStorage("shelper_collections", collections);
-    setLocalStorage("shelper_cacheItems", cacheItems);
-    setLocalStorage("shelper_targetKeys", targetKeys);
-  }, [collections, cacheItems, checkedItems, targetKeys]);
-  const onLoadData: any = ({ childrenIds, key, children }) => {
-    if (!children?.length) {
-      return new Promise((resolve, reject) => {
-        getPublishedFileDetails({
-          itemcount: childrenIds.length,
-          publishedfileids: childrenIds,
+    setLocalStorage(
+      "shelper_dataSource",
+      dataSource.filter((item) => !targetKeys.includes(item.key))
+    );
+  }, [dataSource, targetKeys]);
+  // 动态导入合集下的Mods
+  const onLoadData: any = ({ childrenIds, key }) => {
+    return new Promise((resolve, reject) => {
+      getPublishedFileDetails({
+        itemcount: childrenIds.length,
+        publishedfileids: childrenIds,
+      })
+        .then((res) => {
+          const data = res.response.publishedfiledetails;
+          if (!data) {
+            reject(false);
+            return;
+          }
+          const childrens = data.map((item) => ({
+            key: item.publishedfileid + "-" + new Date().getTime(),
+            collectionId: key,
+            title: item.title,
+            preview_url: item.preview_url,
+            isLeaf: true,
+            selectable: false,
+            disabled: false,
+          }));
+          setCollectionTree((pre) => {
+            childrens.forEach((item) => {
+              findTreeNode(collectionTree, key).addChild(tree.parse(item));
+            });
+            return [...pre];
+          });
+          setTargetKeys((pre) => [
+            ...pre,
+            ...childrens.map((item) => item.key),
+          ]);
+          setDataSource((pre) => [...pre, ...childrens]);
+          return resolve(true);
         })
-          .then((res) => {
-            const data = res.response.publishedfiledetails;
-            if (!data) {
-              reject(false);
-              return;
-            }
-            const children = data.map((item) => ({
-              key: `${key}-${item.publishedfileid}`,
-              title: item.title,
-              preview_url: item.preview_url,
-              isLeaf: true,
-              selectable: false,
-            }));
-            setTargetKeys((pre) => [
-              ...pre,
-              ...children.map((item) => item.key),
-            ]);
-            setCollections((pre) => addTreeItem(pre, key, ...children));
-            return resolve(true);
-          })
-          .catch(() => reject(false));
-      });
-    }
-    return Promise.resolve();
+        .catch((err) => {
+          console.log(err);
+          reject(false);
+        });
+    });
   };
+
+  // 获取用户的所有合集
   useEffect(() => {
     getUserCollections({ appid: appId, sessionid: sessionId }).then(
       async (res) => {
         if (res.success === 1) {
           const items = res.all_collections.items;
-          console.log(items.length, collections.length);
           if (Object.keys(items).length !== collections.length) {
-            setCollections(
-              Object.keys(items).map((key) => ({
-                key: items[key].publishedfileid,
-                title: items[key].title,
-                preview_url: items[key].preview_url,
-                checkable: false,
-                childrenIds: items[key].children.map(
-                  (chil) => chil.publishedfileid
-                ),
-              }))
+            setCollectionTree(
+              Object.keys(items).map((key) => {
+                return tree.parse({
+                  key: items[key].publishedfileid,
+                  title: items[key].title,
+                  preview_url: items[key].preview_url,
+                  checkable: false,
+                  childrenIds: items[key].children.map(
+                    (chil) => chil.publishedfileid
+                  ),
+                });
+              })
             );
           }
         }
@@ -153,30 +162,45 @@ const TreeTransfer: FC<any> = () => {
   }, []);
   return (
     <Image.PreviewGroup>
+      <Space style={{ margin: "10px 10px" }}>
+        <Button
+          onClick={() => {
+            setDataSource((pre) =>
+              pre.filter((item) => targetKeys.includes(item.key))
+            );
+          }}
+        >
+          清除左侧Mods
+        </Button>
+        <Button
+          onClick={() => {
+            getAllUserSubscribedFiles({
+              appId,
+              onProgress: (value) => {
+                setLoadingModsProgress(value);
+              },
+            }).then((res) => {
+              setLoadingModsProgress({});
+              setDataSource((pre) => [...pre, ...res]);
+            });
+          }}
+        >
+          一键导入已订阅Mods
+          {loadingModsProgress.total &&
+            `(${loadingModsProgress.current}/${loadingModsProgress.total})`}
+        </Button>
+      </Space>
       <Transfer
         targetKeys={targetKeys}
         dataSource={dataSource}
-        render={(item: any) => (
-          <TransferItem
-            data={item}
-            onDelete={() => {
-              setCheckedItems((pre) =>
-                pre.filter((preItem) => preItem.key !== item.key)
-              );
-            }}
-          />
-        )}
+        render={(item: any) => <TransferItem data={item} onDelete={() => {}} />}
         style={{ width: "fit-content", height: 600, minWidth: 700 }}
         listStyle={{ height: "100%" }}
         onChange={(targetKeys, direction, moveKeys) => {
-          // 移动到右边时
+          // 向合集中添加Mods
           if (direction === "right") {
             moveKeys.forEach((key) => {
-              const keys = key.split("-");
-              let publishedfileid = key;
-              if (keys.length === 2) {
-                publishedfileid = keys[1];
-              }
+              const publishedfileid = key.split("-")[0];
               if (!treeSelect[0]) {
                 message.warning("请选择合集");
                 return;
@@ -189,29 +213,26 @@ const TreeTransfer: FC<any> = () => {
               }).then((res) => {
                 if (res.success === 1) {
                   setTargetKeys((preKeys) => [...preKeys, key]);
-                  const newTreeNode = checkedItems
-                    .concat(cacheItems)
-                    .filter((item) => item.key === key)[0];
-                  if (!newTreeNode.isLeaf) newTreeNode.isLeaf = true;
-                  setCollections(
-                    addTreeItem(collections, treeSelect[0], newTreeNode)
-                  );
+                  setCollectionTree((pre) => {
+                    const parentNode = findTreeNode(pre, treeSelect[0]);
+                    const childrenNode = dataSource.find(
+                      (item) => item.key === key
+                    );
+                    childrenNode.collectionId = treeSelect[0];
+                    parentNode.addChild(tree.parse(childrenNode));
+                    return [...pre];
+                  });
                 }
               });
             });
           } else {
+            // 删除合集中的Mods
             moveKeys.forEach((key) => {
-              const keys = key.split("-");
-              let treeSelectKey, publishedfileid;
-              if (keys.length === 2) {
-                treeSelectKey = keys[0];
-                publishedfileid = keys[1];
-              } else {
-                treeSelectKey = treeSelect[0];
-                publishedfileid = key;
-              }
+              const publishedfileid = key.split("-")[0];
+              const treeSelectKey = findTreeNode(collectionTree, key)?.model
+                ?.collectionId;
               addItemToCollection({
-                publishedfileid: publishedfileid,
+                publishedfileid,
                 targetPublishedfileid: treeSelectKey,
                 sessionId,
                 type: "remove",
@@ -220,16 +241,11 @@ const TreeTransfer: FC<any> = () => {
                   setTargetKeys((preKeys) => {
                     return preKeys.filter((preKey) => preKey !== key);
                   });
-                  setCacheItems((preItems) => {
-                    const willDeleteItem = getTreeItem(collections, key);
-                    return deduplicateArrayByKey(
-                      [...preItems, willDeleteItem].filter((item) => item)
-                    );
-                  });
                   // 去除树中的当前项
-                  setCollections((preCollections) => {
-                    const test = removeTreeItem(preCollections, key);
-                    return test;
+                  setCollectionTree((pre) => {
+                    const node = findTreeNode(pre, key);
+                    node && node.drop();
+                    return [...pre];
                   });
                 }
               });
@@ -274,8 +290,9 @@ const TreeTransfer: FC<any> = () => {
                     </Space>
                   )}
                   onCheck={(value, e) => {
-                    console.log(value, e);
                     const { checked, node } = e;
+                    console.log(value, e, dataSource);
+
                     onItemSelect(node.key, checked);
                   }}
                 />
@@ -292,7 +309,7 @@ const SideDrawer: React.FC<any> = () => {
   const drawerClose = () => {
     setOpen(false);
   };
-  useReactiveUI();
+
   return (
     <ConfigProvider
       theme={{
@@ -309,6 +326,7 @@ const SideDrawer: React.FC<any> = () => {
     >
       <div>
         <Drawer
+          forceRender
           width={"auto"}
           className={styles["drawer-container"]}
           placement="right"
