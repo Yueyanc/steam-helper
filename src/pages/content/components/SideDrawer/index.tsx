@@ -142,14 +142,17 @@ const TreeTransfer: FC<any> = () => {
         if (res.success === 1) {
           const items = res.all_collections.items;
           if (Object.keys(items).length !== collections.length) {
+            const collectionIds = Object.keys(items)
+              .map((key) => items[key])
+              .filter((item) => item.consumer_appid == appId);
             setCollectionTree(
-              Object.keys(items).map((key) => {
+              collectionIds.map((item) => {
                 return tree.parse({
-                  key: items[key].publishedfileid,
-                  title: items[key].title,
-                  preview_url: items[key].preview_url,
+                  key: item.publishedfileid,
+                  title: item.title,
+                  preview_url: item.preview_url,
                   checkable: false,
-                  childrenIds: items[key].children.map(
+                  childrenIds: item.children.map(
                     (chil) => chil.publishedfileid
                   ),
                 });
