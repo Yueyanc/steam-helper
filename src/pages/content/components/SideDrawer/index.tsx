@@ -41,13 +41,7 @@ const TransferItem: FC<{ data: any; onDelete?: () => void }> = ({
   onDelete = () => {},
 }) => {
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-      }}
-    >
+    <div>
       {data.preview_url && <Image src={data.preview_url} width={80} />}
       <div
         style={{
@@ -382,9 +376,6 @@ const SideDrawer: React.FC<any> = () => {
   const drawerClose = () => {
     setOpen(false);
   };
-  getPublishedFilePageData({ id: "3014906877" }).then((res) => {
-    console.log(res);
-  });
   return (
     <ConfigProvider
       theme={{
