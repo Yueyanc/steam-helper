@@ -9,7 +9,6 @@ import {
   Tree,
   Image,
   ConfigProvider,
-  theme,
   Space,
   Button,
   message,
@@ -161,7 +160,7 @@ const TreeTransfer: FC<any> = () => {
   }, []);
   return (
     <Image.PreviewGroup>
-      <Space style={{ margin: "10px 10px" }}>
+      <Space className="mx-2 my-1">
         <Button
           onClick={() => {
             setDataSource((pre) =>
@@ -377,39 +376,25 @@ const SideDrawer: React.FC<any> = () => {
     setOpen(false);
   };
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: theme.darkAlgorithm,
-        components: {
-          Popover: {
-            zIndexPopup: 999,
-          },
-          Tree: {
-            nodeSelectedBg: "red",
-          },
-        },
-      }}
-    >
-      <div>
-        <Drawer
-          forceRender
-          width={"auto"}
-          className={styles["drawer-container"]}
-          placement="right"
-          open={open}
-          closable={false}
-          onClose={drawerClose}
-          maskClosable
-        >
-          <TreeTransfer />
-        </Drawer>
-        <FloatButton
-          onClick={() => {
-            setOpen(true);
-          }}
-        />
-      </div>
-    </ConfigProvider>
+    <div>
+      <Drawer
+        forceRender
+        width={"auto"}
+        className={styles["drawer-container"]}
+        placement="right"
+        open={open}
+        closable={false}
+        onClose={drawerClose}
+        maskClosable
+      >
+        <TreeTransfer />
+      </Drawer>
+      <FloatButton
+        onClick={() => {
+          setOpen(true);
+        }}
+      />
+    </div>
   );
 };
 export default SideDrawer;
