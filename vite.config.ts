@@ -6,7 +6,6 @@ import customDynamicImport from "./utils/plugins/custom-dynamic-import";
 import addHmr from "./utils/plugins/add-hmr";
 import watchRebuild from "./utils/plugins/watch-rebuild";
 import manifest from "./manifest";
-import autoImportCss from "./utils/plugins/auto-import-css";
 
 const rootDir = resolve(__dirname);
 const srcDir = resolve(rootDir, "src");
@@ -37,7 +36,6 @@ export default defineConfig({
       contentScriptCssKey: regenerateCacheInvalidationKey(),
     }),
     customDynamicImport(),
-    autoImportCss({ cssKey: cacheInvalidationKey }),
     addHmr({ background: enableHmrInBackgroundScript, view: true }),
     watchRebuild(),
   ],
@@ -51,6 +49,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         content: resolve(pagesDir, "content", "index.ts"),
+        contentStyle: resolve(pagesDir, "content", "style.scss"),
         background: resolve(pagesDir, "background", "index.ts"),
         popup: resolve(pagesDir, "popup", "index.html"),
       },

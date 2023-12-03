@@ -1,14 +1,12 @@
 import styles from "./index.module.scss";
-import { useEffect, useMemo, useState, useId } from "react";
+import { useEffect, useMemo, useState, useId, useContext } from "react";
 import type { FC } from "react";
 import {
   FloatButton,
   Drawer,
-  Popover,
   Transfer,
   Tree,
   Image,
-  ConfigProvider,
   Space,
   Button,
   message,
@@ -30,8 +28,9 @@ import {
   getUserCollections,
 } from "../../serives";
 import { useReactiveUI } from "./hook";
-import { DeleteOutlined } from "@ant-design/icons";
+import { DeleteOutlined, Loading3QuartersOutlined } from "@ant-design/icons";
 import TreeModel from "tree-model";
+import { GlobalContext } from "../../context";
 
 const tree = new TreeModel();
 // 把datasource的item渲染成左边有个预览图右边为title的组件
@@ -40,19 +39,17 @@ const TransferItem: FC<{ data: any; onDelete?: () => void }> = ({
   onDelete = () => {},
 }) => {
   return (
-    <div>
-      {data.preview_url && <Image src={data.preview_url} width={80} />}
-      <div
-        style={{
-          display: "inline-block",
-          maxWidth: 110,
-          marginLeft: 10,
-          wordBreak: "break-all",
-          whiteSpace: "normal",
-        }}
-      >
-        {data.title}
-      </div>
+    <div className="flex items-center justify-start gap-2">
+      {data.preview_url && (
+        <Image
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+          src={data.preview_url}
+          width={80}
+        />
+      )}
+      <div className="w-[110px] break-all whitespace-normal">{data.title}</div>
       <Button
         onClick={() => {
           onDelete();
@@ -65,6 +62,7 @@ const TransferItem: FC<{ data: any; onDelete?: () => void }> = ({
 const TreeTransfer: FC<any> = () => {
   const appId = getRecentlyAppId();
   const sessionId = getSessionId();
+  const { root: rootDom } = useContext(GlobalContext);
   const [treeSelect, setTreeSelect] = useState([]);
   const [targetKeys, setTargetKeys] = useState([]);
   const [collectionTree, setCollectionTree] = useState<any[]>([]);
@@ -159,8 +157,8 @@ const TreeTransfer: FC<any> = () => {
     );
   }, []);
   return (
-    <Image.PreviewGroup>
-      <Space className="mx-2 my-1">
+    <Image.PreviewGroup preview={{ getContainer: () => rootDom }}>
+      <Space className="my-2">
         <Button
           onClick={() => {
             setDataSource((pre) =>
@@ -171,19 +169,23 @@ const TreeTransfer: FC<any> = () => {
           清除左侧Mods
         </Button>
         <Button
+          className="bg-gradient-to-r from-purple-500 to-pink-500 !hover:text-white flex items-center justify-center"
           onClick={() => {
             getAllUserSubscribedFiles({
               appId,
-              onProgress: (value) => {
-                setLoadingModsProgress(value);
+              onProgress: ({ total, current, items }) => {
+                setLoadingModsProgress({ total, current });
+                setDataSource((pre) => [...pre, ...items]);
               },
             }).then((res) => {
               setLoadingModsProgress({});
-              setDataSource((pre) => [...pre, ...res]);
             });
           }}
         >
           一键导入已订阅Mods
+          {loadingModsProgress.current && (
+            <Loading3QuartersOutlined className="animate-spin" />
+          )}
           {loadingModsProgress.total &&
             `(${loadingModsProgress.current}/${loadingModsProgress.total})`}
         </Button>
@@ -191,6 +193,7 @@ const TreeTransfer: FC<any> = () => {
       <Transfer
         targetKeys={targetKeys}
         dataSource={dataSource}
+        operationStyle={{}}
         render={(item: any) => (
           <TransferItem
             data={item}
@@ -199,7 +202,7 @@ const TreeTransfer: FC<any> = () => {
             }}
           />
         )}
-        style={{ width: "fit-content", height: 600, minWidth: 700 }}
+        className="w-fit h-[600px] min-w-[700px]"
         listStyle={{ height: "100%" }}
         onChange={async (targetKeys, direction, moveKeys) => {
           // 向合集中添加Mods
@@ -322,8 +325,8 @@ const TreeTransfer: FC<any> = () => {
         {({ direction, onItemSelect }) => {
           if (direction === "right") {
             return (
-              <div style={{ height: "100%", overflow: "auto" }}>
-                <Space style={{ margin: "10px 10px" }}>
+              <div className="h-full overflow-auto">
+                <Space className="m-2">
                   <Button disabled>新增合集</Button>
                   <Button
                     onClick={() => {
@@ -340,7 +343,7 @@ const TreeTransfer: FC<any> = () => {
                 </Space>
                 <Tree
                   loadData={onLoadData}
-                  style={{ width: 300 }}
+                  className="w-80"
                   checkable
                   treeData={collections}
                   selectedKeys={treeSelect}
@@ -372,6 +375,7 @@ const TreeTransfer: FC<any> = () => {
 };
 const SideDrawer: React.FC<any> = () => {
   const [open, setOpen] = useState(false);
+  const { root: rootDom } = useContext(GlobalContext);
   const drawerClose = () => {
     setOpen(false);
   };
@@ -380,16 +384,19 @@ const SideDrawer: React.FC<any> = () => {
       <Drawer
         forceRender
         width={"auto"}
-        className={styles["drawer-container"]}
+        rootClassName="fixed"
+        className="max-h-screen backdrop-blur-3xl !bg-transparent"
         placement="right"
         open={open}
         closable={false}
         onClose={drawerClose}
         maskClosable
+        getContainer={() => rootDom}
       >
         <TreeTransfer />
       </Drawer>
       <FloatButton
+        className="bg-gradient-to-r from-purple-500 to-pink-500 "
         onClick={() => {
           setOpen(true);
         }}
