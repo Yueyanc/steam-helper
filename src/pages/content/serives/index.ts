@@ -1,9 +1,4 @@
-import { parse } from "path";
-import {
-  getUerIdLocal,
-  parseModDetailDocument,
-  parseSubscribedFilesDocument,
-} from "../utils";
+import { getUerIdLocal } from "../utils";
 import request from "../utils/request";
 import qs from "qs";
 export const getPublishedFileDetails = (data: {
@@ -24,7 +19,23 @@ export const getPublishedFilePageData = ({ id }: { id: string }) => {
   return request<any, any>(
     `https://steamcommunity.com/sharedfiles/filedetails/?id=${id}`
   ).then((res) => {
-    return parseModDetailDocument(res);
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = res;
+    const screenshots = Array.from(
+      tempDiv.querySelectorAll(".highlight_strip_screenshot")
+    ).map((item) => {
+      const img = item.querySelector("img");
+      return img.getAttribute("src");
+    });
+    const requiredItems = Array.from(
+      tempDiv.querySelector("#RequiredItems").querySelectorAll("a")
+    ).map((item) => {
+      const href = item.getAttribute("href");
+      const title = item.querySelector(".requiredItem").textContent;
+      const id = href.split("id=")[1];
+      return { id, title };
+    });
+    return { requiredItems, screenshots };
   });
 };
 
@@ -59,7 +70,19 @@ export const getUserSubscribedFiles = async ({
       method: "get",
     }
   ).then((res) => {
-    return parseSubscribedFilesDocument(res);
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = res;
+
+    const rawItems = tempDiv.querySelectorAll('[id^="Subscription"]');
+    const total = tempDiv
+      .querySelector(".workshopBrowsePagingInfo")
+      .textContent.match(/共 (\d+) 项条目/)[1];
+    const items = Array.from(rawItems).map((item) => ({
+      key: item.id.replace("Subscription", ""),
+      title: item.querySelector(".workshopItemTitle").textContent,
+      preview_url: item.querySelector(".backgroundImg").getAttribute("src"),
+    }));
+    return { total, items };
   });
 };
 export const getAllUserSubscribedFiles = async ({
@@ -67,11 +90,7 @@ export const getAllUserSubscribedFiles = async ({
   onProgress,
 }: {
   appId: string;
-  onProgress?: (params: {
-    total: number;
-    current: number;
-    items: any[];
-  }) => void;
+  onProgress?: (params: { total: number; current: number }) => void;
 }) => {
   let limit = 1;
   const result = [];
@@ -82,7 +101,7 @@ export const getAllUserSubscribedFiles = async ({
       numperpage: 30,
     });
     limit = Math.ceil(Number(res.total) / 30);
-    onProgress({ total: Number(res.total), current: i * 30, items: res.items });
+    onProgress({ total: Number(res.total), current: i * 30 });
     result.push(...res.items);
   }
   return result;

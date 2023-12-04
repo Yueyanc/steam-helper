@@ -1,10 +1,8 @@
 import { createRoot } from "react-dom/client";
 import SideDrawer from "./components/SideDrawer";
 import { attachTwindStyle } from "@root/src/shared/style/twind";
-import { StyleProvider } from "@ant-design/cssinjs";
+import { StyleProvider, createCache } from "@ant-design/cssinjs";
 import { ConfigProvider, theme } from "antd";
-import injectedStyle from "./injected.css?inline";
-import { GlobalContext } from "./context";
 const root = document.createElement("div");
 root.id = "steam-workshop-helper";
 
@@ -16,29 +14,27 @@ rootIntoShadow.id = "shadow-root";
 
 shadowRoot.appendChild(rootIntoShadow);
 attachTwindStyle(rootIntoShadow, shadowRoot);
-attachTwindStyle(document.querySelector("body"), document);
-const styleElement = document.createElement("style");
-styleElement.innerHTML = injectedStyle;
-shadowRoot.appendChild(styleElement);
+
 function App() {
   return (
-    <StyleProvider container={shadowRoot}>
-      <GlobalContext.Provider value={{ root: rootIntoShadow }}>
-        <ConfigProvider
-          theme={{
-            algorithm: theme.darkAlgorithm,
-            components: {
-              Popover: {
-                zIndexPopup: 999,
-              },
+    <StyleProvider container={shadowRoot} cache={createCache()}>
+      {/* <ConfigProvider
+        theme={{
+          algorithm: theme.darkAlgorithm,
+          components: {
+            Popover: {
+              zIndexPopup: 999,
             },
-          }}
-        >
-          <div>
-            <SideDrawer />
-          </div>
-        </ConfigProvider>
-      </GlobalContext.Provider>
+            Tree: {
+              nodeSelectedBg: "red",
+            },
+          },
+        }}
+      > */}
+      <div>
+        <SideDrawer />
+      </div>
+      {/* </ConfigProvider> */}
     </StyleProvider>
   );
 }
