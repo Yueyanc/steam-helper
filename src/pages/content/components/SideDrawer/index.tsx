@@ -122,7 +122,6 @@ const TreeTransfer: FC<any> = () => {
           return resolve(true);
         })
         .catch((err) => {
-          console.log(err);
           reject(false);
         });
     });
@@ -138,6 +137,7 @@ const TreeTransfer: FC<any> = () => {
             const collectionIds = Object.keys(items)
               .map((key) => items[key])
               .filter((item) => item.consumer_appid == appId);
+
             setCollectionTree(
               collectionIds.map((item) => {
                 return tree.parse({
@@ -145,9 +145,9 @@ const TreeTransfer: FC<any> = () => {
                   title: item.title,
                   preview_url: item.preview_url,
                   checkable: false,
-                  childrenIds: item.children.map(
-                    (chil) => chil.publishedfileid
-                  ),
+                  childrenIds: item?.children
+                    ? item?.children.map((chil) => chil.publishedfileid)
+                    : [],
                 });
               })
             );
@@ -208,38 +208,48 @@ const TreeTransfer: FC<any> = () => {
           // 向合集中添加Mods
           if (direction === "right") {
             moveKeys.forEach(async (key) => {
-              const publishedfileid = key.split("-")[0];
-              const currentMod = dataSource.find((item) => item.key === key);
-              let requiredResults = [];
               if (!treeSelect[0]) {
                 message.warning("请选择合集");
                 return;
               }
+              const publishedfileid = key.split("-")[0];
+              const currentMod = dataSource.find((item) => item.key === key);
+              let requiredResults = [];
               const { requiredItems } = await getPublishedFilePageData({
                 id: publishedfileid,
               });
               if (requiredItems?.length) {
+                const requiredMods = requiredItems.map((item) => ({
+                  key: `${item.id}-${new Date().getTime()}`,
+                  isLeaf: true,
+                  title: item.title,
+                }));
                 await new Promise((resolve, reject) => {
                   Modal.confirm({
                     title: `${currentMod.title}有依赖项，是否一并添加？`,
                     content: (
                       <div>
                         <img src={currentMod.preview_url} width={200} />
-                        {requiredItems.map((item, index) => (
+                        {requiredMods.map((item, index) => (
                           <div key={index}>{item.title}</div>
                         ))}
                       </div>
                     ),
                     onOk: async () => {
                       requiredResults = await Promise.all(
-                        requiredItems.map((item) => {
+                        requiredMods.map((item) => {
                           return addItemToCollection({
-                            publishedfileid: item.id,
+                            publishedfileid: item.key.split("-")[0],
                             targetPublishedfileid: treeSelect[0],
                             sessionId,
                             type: "add",
                           }).then((res) => {
                             if (res.success === 1) {
+                              setDataSource((pre) => [...pre, item]);
+                              setTargetKeys((preKeys) => [
+                                ...preKeys,
+                                item.key,
+                              ]);
                               return item;
                             } else {
                               message.warning(
@@ -259,7 +269,6 @@ const TreeTransfer: FC<any> = () => {
                   });
                 });
               }
-              console.log("????");
 
               addItemToCollection({
                 publishedfileid: publishedfileid,
@@ -279,7 +288,6 @@ const TreeTransfer: FC<any> = () => {
                     const requiredSuccessed = requiredResults.filter(
                       (item) => item
                     );
-                    console.log(requiredSuccessed);
 
                     if (requiredSuccessed.length > 0) {
                       requiredSuccessed.forEach((item) => {
@@ -360,7 +368,6 @@ const TreeTransfer: FC<any> = () => {
                   )}
                   onCheck={(value, e) => {
                     const { checked, node } = e;
-                    console.log(value, e, dataSource);
 
                     onItemSelect(node.key, checked);
                   }}

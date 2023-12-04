@@ -52,6 +52,5 @@ export const useReactiveUI = ({ add }: { add: (item: any) => void }) => {
         div
       );
     });
-    console.log(rawItemEls);
   }, []);
 };

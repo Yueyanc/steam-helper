@@ -112,7 +112,6 @@ export function deduplicateArrayByKey(array, key = "key") {
     }
     return accumulator;
   }, {});
-  console.log(deduplicatedArray);
 
   return Object.values(deduplicatedArray);
 }

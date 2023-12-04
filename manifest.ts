@@ -8,7 +8,7 @@ const manifest: chrome.runtime.ManifestV3 = {
   name: packageJson.name,
   version: packageJson.version,
   description: packageJson.description,
-  permissions: ["storage", "tabs"],
+  permissions: ["tabs"],
   background: {
     service_worker: "src/pages/background/index.js",
     type: "module",
