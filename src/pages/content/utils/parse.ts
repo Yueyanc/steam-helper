@@ -1,26 +1,20 @@
 export const parseModDetailDocument = (htmlString: string) => {
-  let screenshots = [];
-  let requiredItems = [];
   const tempDiv = document.createElement("div");
   tempDiv.innerHTML = htmlString;
-  const screenshotDom = tempDiv.querySelectorAll(".highlight_strip_screenshot");
-  if (screenshotDom?.length) {
-    screenshots = Array.from(screenshotDom).map((item) => {
-      const img = item.querySelector("img");
-      return img.getAttribute("src");
-    });
-  }
-  const requiredItemsDom = tempDiv
-    .querySelector("#RequiredItems")
-    ?.querySelectorAll("a");
-  if (requiredItemsDom?.length) {
-    requiredItems = Array.from(requiredItemsDom).map((item) => {
-      const href = item.getAttribute("href");
-      const title = item.querySelector(".requiredItem").textContent;
-      const id = href.split("id=")[1];
-      return { id, title };
-    });
-  }
+  const screenshots = Array.from(
+    tempDiv.querySelectorAll(".highlight_strip_screenshot")
+  ).map((item) => {
+    const img = item.querySelector("img");
+    return img.getAttribute("src");
+  });
+  const requiredItems = Array.from(
+    tempDiv.querySelector("#RequiredItems").querySelectorAll("a")
+  ).map((item) => {
+    const href = item.getAttribute("href");
+    const title = item.querySelector(".requiredItem").textContent;
+    const id = href.split("id=")[1];
+    return { id, title };
+  });
   return {
     screenshots,
     requiredItems,
