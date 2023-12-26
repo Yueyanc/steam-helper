@@ -31,7 +31,8 @@ import { useReactiveUI } from "./hook";
 import { DeleteOutlined, Loading3QuartersOutlined } from "@ant-design/icons";
 import TreeModel from "tree-model";
 import { GlobalContext } from "../../context";
-
+import _ from "lodash";
+import { StorageKey } from "../../constant";
 const tree = new TreeModel();
 // 把datasource的item渲染成左边有个预览图右边为title的组件
 const TransferItem: FC<{ data: any; onDelete?: () => void }> = ({
@@ -68,7 +69,7 @@ const TreeTransfer: FC<any> = () => {
   const [collectionTree, setCollectionTree] = useState<any[]>([]);
   const [loadingModsProgress, setLoadingModsProgress] = useState<any>({});
   const [dataSource, setDataSource] = useState<any[]>(
-    getLocalStorage("shelper_dataSource") || []
+    getLocalStorage(StorageKey.shelper_dataSource) || []
   );
   const collections = useMemo(() => {
     return collectionTree.map((item) => item.model);
@@ -82,7 +83,7 @@ const TreeTransfer: FC<any> = () => {
   // 持久化储存已选Mods
   useEffect(() => {
     setLocalStorage(
-      "shelper_dataSource",
+      StorageKey.shelper_dataSource,
       dataSource.filter((item) => !targetKeys.includes(item.key))
     );
   }, [dataSource, targetKeys]);
@@ -94,31 +95,37 @@ const TreeTransfer: FC<any> = () => {
         publishedfileids: childrenIds,
       })
         .then((res) => {
-          const data = res.response.publishedfiledetails;
-          if (!data) {
+          if (!_.hasIn(res, ["response", "publishedfiledetails"])) {
             reject(false);
             return;
           }
-          const childrens = data.map((item) => ({
-            key: item.publishedfileid + "-" + new Date().getTime(),
-            collectionId: key,
-            title: item.title,
-            preview_url: item.preview_url,
-            isLeaf: true,
-            selectable: false,
-            disabled: false,
-          }));
-          setCollectionTree((pre) => {
-            childrens.forEach((item) => {
-              findTreeNode(collectionTree, key).addChild(tree.parse(item));
+          _.chain(res)
+            .thru((res) => res.response.publishedfiledetails)
+            .map((item) => ({
+              key: item.publishedfileid + "-" + new Date().getTime(),
+              collectionId: key,
+              title: item.title,
+              preview_url: item.preview_url,
+              isLeaf: true,
+              selectable: false,
+              disabled: false,
+            }))
+            // 处理副作用
+            .tap((childrens) => {
+              // 导入树
+              setCollectionTree((pre) => {
+                childrens.forEach((item) => {
+                  findTreeNode(collectionTree, key).addChild(tree.parse(item));
+                });
+                return [...pre];
+              });
+              setDataSource((pre) => [...pre, ...childrens]);
+              // 设置穿梭框target
+              setTargetKeys((pre) => [
+                ...pre,
+                ...childrens.map((item) => item.key),
+              ]);
             });
-            return [...pre];
-          });
-          setTargetKeys((pre) => [
-            ...pre,
-            ...childrens.map((item) => item.key),
-          ]);
-          setDataSource((pre) => [...pre, ...childrens]);
           return resolve(true);
         })
         .catch((err) => {
@@ -134,23 +141,21 @@ const TreeTransfer: FC<any> = () => {
         if (res.success === 1) {
           const items = res.all_collections.items;
           if (Object.keys(items).length !== collections.length) {
-            const collectionIds = Object.keys(items)
-              .map((key) => items[key])
-              .filter((item) => item.consumer_appid == appId);
-
-            setCollectionTree(
-              collectionIds.map((item) => {
-                return tree.parse({
-                  key: item.publishedfileid,
-                  title: item.title,
-                  preview_url: item.preview_url,
-                  checkable: false,
-                  childrenIds: item?.children
-                    ? item?.children.map((chil) => chil.publishedfileid)
-                    : [],
-                });
-              })
-            );
+            const treeNodes = _.chain(items)
+              .values()
+              .filter((item) => item.consumer_appid == appId)
+              .map((item) => ({
+                key: item.publishedfileid,
+                title: item.title,
+                preview_url: item.preview_url,
+                checkable: false,
+                childrenIds: item?.children
+                  ? item.children?.map((chil) => chil.publishedfileid)
+                  : [],
+              }))
+              .map((item) => tree.parse(item))
+              .value();
+            setCollectionTree(treeNodes);
           }
         }
       }
@@ -177,7 +182,7 @@ const TreeTransfer: FC<any> = () => {
                 setLoadingModsProgress({ total, current });
                 setDataSource((pre) => [...pre, ...items]);
               },
-            }).then((res) => {
+            }).then(() => {
               setLoadingModsProgress({});
             });
           }}

@@ -6,12 +6,17 @@ import {
 } from "../utils";
 import request from "../utils/request";
 import qs from "qs";
+import {
+  GetCollectionsResponse,
+  GetPublishedFileDetailsResponse,
+} from "../types";
+
 export const getPublishedFileDetails = (data: {
   itemcount: number;
   publishedfileids: string[];
   access_token?: string;
 }) => {
-  return request<any, any>(
+  return request<any, GetPublishedFileDetailsResponse>(
     "https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/",
     {
       method: "post",
@@ -92,7 +97,7 @@ export const getUserCollections = (data: {
   publishedfileid?: string;
   sessionid: string;
 }) => {
-  return request<any, any>(
+  return request<any, GetCollectionsResponse>(
     "https://steamcommunity.com/sharedfiles/ajaxgetmycollections",
     {
       method: "post",
