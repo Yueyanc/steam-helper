@@ -25,8 +25,8 @@ export const getPublishedFileDetails = (data: {
     }
   );
 };
-export const getPublishedFilePageData = ({ id }: { id: string }) => {
-  return request<any, any>(
+export const getPublishedFileParseDetail = ({ id }: { id: string }) => {
+  return request<any, string>(
     `https://steamcommunity.com/sharedfiles/filedetails/?id=${id}`
   ).then((res) => {
     return parseModDetailDocument(res);

@@ -110,3 +110,12 @@ export interface GetPublishedFileDetailsResponse {
     resultcount: number;
   };
 }
+export interface SideDrawerModSource {
+  key: string;
+  collectionId: string;
+  title: string;
+  preview_url: string;
+  isLeaf: boolean;
+  selectable: boolean;
+  disabled: boolean;
+}

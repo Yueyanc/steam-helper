@@ -24,7 +24,7 @@ import {
   addItemToCollection,
   getAllUserSubscribedFiles,
   getPublishedFileDetails,
-  getPublishedFilePageData,
+  getPublishedFileParseDetail,
   getUserCollections,
 } from "../../serives";
 import { useReactiveUI } from "./hook";
@@ -33,7 +33,40 @@ import TreeModel from "tree-model";
 import { GlobalContext } from "../../context";
 import _ from "lodash";
 import { StorageKey } from "../../constant";
+import { SideDrawerModSource } from "../../types";
 const tree = new TreeModel();
+
+async function confirmDependency(
+  params: Pick<SideDrawerModSource, "key" | "title" | "preview_url">
+): Promise<ReturnType<typeof getPublishedFileParseDetail> | null> {
+  const publishedFileParseDetail = await getPublishedFileParseDetail({
+    id: params.key,
+  });
+  if (publishedFileParseDetail?.requiredItems?.length) {
+    return Promise.resolve(null);
+  }
+  const { requiredItems } = publishedFileParseDetail;
+  return new Promise((resolve, reject) => {
+    Modal.confirm({
+      title: `${params.title}有依赖项，是否一并添加？`,
+      content: (
+        <div>
+          <img src={params.preview_url} width={200} />
+          {requiredItems.map((item, index) => (
+            <div key={index}>{item.title}</div>
+          ))}
+        </div>
+      ),
+      onOk: async () => {
+        resolve(publishedFileParseDetail);
+      },
+      onCancel: () => {
+        reject();
+      },
+    });
+  });
+}
+
 // 把datasource的item渲染成左边有个预览图右边为title的组件
 const TransferItem: FC<{ data: any; onDelete?: () => void }> = ({
   data,
@@ -68,7 +101,7 @@ const TreeTransfer: FC<any> = () => {
   const [targetKeys, setTargetKeys] = useState([]);
   const [collectionTree, setCollectionTree] = useState<any[]>([]);
   const [loadingModsProgress, setLoadingModsProgress] = useState<any>({});
-  const [dataSource, setDataSource] = useState<any[]>(
+  const [dataSource, setDataSource] = useState<SideDrawerModSource[]>(
     getLocalStorage(StorageKey.shelper_dataSource) || []
   );
   const collections = useMemo(() => {
@@ -212,101 +245,109 @@ const TreeTransfer: FC<any> = () => {
         onChange={async (targetKeys, direction, moveKeys) => {
           // 向合集中添加Mods
           if (direction === "right") {
-            moveKeys.forEach(async (key) => {
-              if (!treeSelect[0]) {
-                message.warning("请选择合集");
-                return;
-              }
-              const publishedfileid = key.split("-")[0];
-              const currentMod = dataSource.find((item) => item.key === key);
-              let requiredResults = [];
-              const { requiredItems } = await getPublishedFilePageData({
-                id: publishedfileid,
-              });
-              if (requiredItems?.length) {
-                const requiredMods = requiredItems.map((item) => ({
-                  key: `${item.id}-${new Date().getTime()}`,
-                  isLeaf: true,
-                  title: item.title,
-                }));
-                await new Promise((resolve, reject) => {
-                  Modal.confirm({
-                    title: `${currentMod.title}有依赖项，是否一并添加？`,
-                    content: (
-                      <div>
-                        <img src={currentMod.preview_url} width={200} />
-                        {requiredMods.map((item, index) => (
-                          <div key={index}>{item.title}</div>
-                        ))}
-                      </div>
-                    ),
-                    onOk: async () => {
-                      requiredResults = await Promise.all(
-                        requiredMods.map((item) => {
-                          return addItemToCollection({
-                            publishedfileid: item.key.split("-")[0],
-                            targetPublishedfileid: treeSelect[0],
-                            sessionId,
-                            type: "add",
-                          }).then((res) => {
-                            if (res.success === 1) {
-                              setDataSource((pre) => [...pre, item]);
-                              setTargetKeys((preKeys) => [
-                                ...preKeys,
-                                item.key,
-                              ]);
-                              return item;
-                            } else {
-                              message.warning(
-                                `${item.title}添加失败,请手动添加`
-                              );
-                              return false;
-                            }
-                          });
-                        })
-                      );
+            if (!treeSelect[0]) {
+              message.warning("请选择合集");
+              return;
+            }
+            const dependencies = await Promise.all(
+              // 获取依赖项
+              _.chain(moveKeys)
+                .map((key) => dataSource.find((item) => item.key === key))
+                .map((item) =>
+                  // 确认是否拉取依赖项
+                  confirmDependency(
+                    _.pick(item, ["key", "title", "preview_url"])
+                  )
+                )
+                .value()
+            );
 
-                      resolve(true);
-                    },
-                    onCancel: () => {
-                      resolve(false);
-                    },
-                  });
-                });
-              }
+            const dependenciesId = _.chain(dependencies)
+              .filter((item) => !_.isNil(item))
+              .map((item) => item.requiredItems)
+              .flatten()
+              .map((item) => item.id);
 
-              addItemToCollection({
-                publishedfileid: publishedfileid,
-                targetPublishedfileid: treeSelect[0],
-                sessionId,
-                type: "add",
-              }).then((res) => {
-                if (res.success === 1) {
-                  setTargetKeys((preKeys) => [...preKeys, key]);
-                  setCollectionTree((pre) => {
-                    const parentNode = findTreeNode(pre, treeSelect[0]);
-                    const childrenNode = dataSource.find(
-                      (item) => item.key === key
-                    );
-                    childrenNode.collectionId = treeSelect[0];
-                    parentNode.addChild(tree.parse(childrenNode));
-                    const requiredSuccessed = requiredResults.filter(
-                      (item) => item
-                    );
+            const allNeedAddId = dependenciesId.concat(
+              ...moveKeys.map((item) => item.split("-")[0])
+            );
 
-                    if (requiredSuccessed.length > 0) {
-                      requiredSuccessed.forEach((item) => {
-                        item.collectionId = treeSelect[0];
-                        item.isLeaf = true;
-                        parentNode.addChild(tree.parse(item));
-                      });
-                    }
+            const addResult = allNeedAddId
+              .map((item) =>
+                addItemToCollection({
+                  publishedfileid: item,
+                  targetPublishedfileid: treeSelect[0],
+                  sessionId,
+                  type: "add",
+                })
+              )
+              .map((item) => item.catch((err) => {}));
+            // moveKeys.forEach(async (key) => {
+            //   const publishedfileid = key.split("-")[0];
+            //   const { requiredItems } = await getPublishedFileParseDetail({
+            //     id: publishedfileid,
+            //   });
+            //   if (!_.isEmpty(requiredItems)) {
+            //     const requiredMods = requiredItems.map((item) => ({
+            //       key: `${item.id}-${new Date().getTime()}`,
+            //       isLeaf: true,
+            //       title: item.title,
+            //     }));
+            //     const currentMod = dataSource.find((item) => item.key === key);
 
-                    return [...pre];
-                  });
-                }
-              });
-            });
+            //     await new Promise((resolve, reject) => {
+            //       Modal.confirm({
+            //         title: `${currentMod.title}有依赖项，是否一并添加？`,
+            //         content: (
+            //           <div>
+            //             <img src={currentMod.preview_url} width={200} />
+            //             {requiredMods.map((item, index) => (
+            //               <div key={index}>{item.title}</div>
+            //             ))}
+            //           </div>
+            //         ),
+            //         onOk: async () => {
+            //           resolve(true);
+            //         },
+            //         onCancel: () => {
+            //           resolve(false);
+            //         },
+            //       });
+            //     });
+            //   }
+
+            //   addItemToCollection({
+            //     publishedfileid: publishedfileid,
+            //     targetPublishedfileid: treeSelect[0],
+            //     sessionId,
+            //     type: "add",
+            //   }).then((res) => {
+            //     if (res.success === 1) {
+            //       setTargetKeys((preKeys) => [...preKeys, key]);
+            //       setCollectionTree((pre) => {
+            //         const parentNode = findTreeNode(pre, treeSelect[0]);
+            //         const childrenNode = dataSource.find(
+            //           (item) => item.key === key
+            //         );
+            //         childrenNode.collectionId = treeSelect[0];
+            //         parentNode.addChild(tree.parse(childrenNode));
+            //         const requiredSuccessed = requiredResults.filter(
+            //           (item) => item
+            //         );
+
+            //         if (requiredSuccessed.length > 0) {
+            //           requiredSuccessed.forEach((item) => {
+            //             item.collectionId = treeSelect[0];
+            //             item.isLeaf = true;
+            //             parentNode.addChild(tree.parse(item));
+            //           });
+            //         }
+
+            //         return [...pre];
+            //       });
+            //     }
+            //   });
+            // });
           } else {
             // 删除合集中的Mods
             moveKeys.forEach((key) => {
