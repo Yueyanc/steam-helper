@@ -34,6 +34,7 @@ import { GlobalContext } from "../../context";
 import _ from "lodash";
 import { StorageKey } from "../../constant";
 import { SideDrawerModSource } from "../../types";
+import ModsTable from "./ModsTable";
 const tree = new TreeModel();
 
 async function confirmDependency(
@@ -158,10 +159,13 @@ const TreeTransfer: FC<any> = () => {
                 ...pre,
                 ...childrens.map((item) => item.key),
               ]);
-            });
+            })
+            .value();
           return resolve(true);
         })
         .catch((err) => {
+          console.log(err);
+
           reject(false);
         });
     });
@@ -282,72 +286,6 @@ const TreeTransfer: FC<any> = () => {
                 })
               )
               .map((item) => item.catch((err) => {}));
-            // moveKeys.forEach(async (key) => {
-            //   const publishedfileid = key.split("-")[0];
-            //   const { requiredItems } = await getPublishedFileParseDetail({
-            //     id: publishedfileid,
-            //   });
-            //   if (!_.isEmpty(requiredItems)) {
-            //     const requiredMods = requiredItems.map((item) => ({
-            //       key: `${item.id}-${new Date().getTime()}`,
-            //       isLeaf: true,
-            //       title: item.title,
-            //     }));
-            //     const currentMod = dataSource.find((item) => item.key === key);
-
-            //     await new Promise((resolve, reject) => {
-            //       Modal.confirm({
-            //         title: `${currentMod.title}有依赖项，是否一并添加？`,
-            //         content: (
-            //           <div>
-            //             <img src={currentMod.preview_url} width={200} />
-            //             {requiredMods.map((item, index) => (
-            //               <div key={index}>{item.title}</div>
-            //             ))}
-            //           </div>
-            //         ),
-            //         onOk: async () => {
-            //           resolve(true);
-            //         },
-            //         onCancel: () => {
-            //           resolve(false);
-            //         },
-            //       });
-            //     });
-            //   }
-
-            //   addItemToCollection({
-            //     publishedfileid: publishedfileid,
-            //     targetPublishedfileid: treeSelect[0],
-            //     sessionId,
-            //     type: "add",
-            //   }).then((res) => {
-            //     if (res.success === 1) {
-            //       setTargetKeys((preKeys) => [...preKeys, key]);
-            //       setCollectionTree((pre) => {
-            //         const parentNode = findTreeNode(pre, treeSelect[0]);
-            //         const childrenNode = dataSource.find(
-            //           (item) => item.key === key
-            //         );
-            //         childrenNode.collectionId = treeSelect[0];
-            //         parentNode.addChild(tree.parse(childrenNode));
-            //         const requiredSuccessed = requiredResults.filter(
-            //           (item) => item
-            //         );
-
-            //         if (requiredSuccessed.length > 0) {
-            //           requiredSuccessed.forEach((item) => {
-            //             item.collectionId = treeSelect[0];
-            //             item.isLeaf = true;
-            //             parentNode.addChild(tree.parse(item));
-            //           });
-            //         }
-
-            //         return [...pre];
-            //       });
-            //     }
-            //   });
-            // });
           } else {
             // 删除合集中的Mods
             moveKeys.forEach((key) => {
@@ -446,7 +384,8 @@ const SideDrawer: React.FC<any> = () => {
         maskClosable
         getContainer={() => rootDom}
       >
-        <TreeTransfer />
+        {/* <TreeTransfer /> */}
+        <ModsTable />
       </Drawer>
       <FloatButton
         className="bg-gradient-to-r from-purple-500 to-pink-500 "

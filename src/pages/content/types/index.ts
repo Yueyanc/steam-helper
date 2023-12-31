@@ -102,6 +102,7 @@ export interface PublishedFileDetails {
   title: string;
   views: number;
   visibility: number;
+  collectionBy?: CollectionsDetail;
 }
 export interface GetPublishedFileDetailsResponse {
   response: {

@@ -109,7 +109,7 @@ export const getUserCollections = (data: {
 export const addItemToCollection = (rawData: {
   publishedfileid: string;
   targetPublishedfileid: string;
-  sessionId: string;
+  sessionId?: string;
   type: "add" | "remove";
   title?: string;
 }) => {

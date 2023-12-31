@@ -25,6 +25,7 @@ function App() {
     <StyleProvider container={shadowRoot}>
       <GlobalContext.Provider value={{ root: rootIntoShadow }}>
         <ConfigProvider
+          getPopupContainer={() => rootIntoShadow}
           theme={{
             algorithm: theme.darkAlgorithm,
             components: {

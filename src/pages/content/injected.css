@@ -1,6 +1,9 @@
 .ant-transfer-list-body{
   overflow-y: auto;
 }
+.ant-tree-switcher-icon{
+  vertical-align:text-bottom !important;
+}
 .ant-tree-checkbox{
   display: flex;
   justify-content: center;
