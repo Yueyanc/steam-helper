@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { SubscribedFilesDocumentParseResult } from "../types";
 
 function parseHTML(htmlString: string): Document {
   const parser = new DOMParser();
@@ -33,4 +34,20 @@ export const parseModDetailDocument = (htmlString: string) => {
     })
     .value();
 };
-export const parseSubscribedFilesDocument = (htmlString: string) => {};
+export const parseSubscribedFilesDocument: (
+  htmlString: string
+) => SubscribedFilesDocumentParseResult = (htmlString: string) => {
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = htmlString;
+
+  const rawItems = tempDiv.querySelectorAll('[id^="Subscription"]');
+  const total = tempDiv
+    .querySelector(".workshopBrowsePagingInfo")
+    .textContent.match(/共 (\d+) 项条目/)[1];
+  const items = Array.from(rawItems).map((item) => ({
+    key: item.id.replace("Subscription", ""),
+    title: item.querySelector(".workshopItemTitle").textContent,
+    preview_url: item.querySelector(".backgroundImg").getAttribute("src"),
+  }));
+  return { total, items };
+};

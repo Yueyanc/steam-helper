@@ -1,24 +1,25 @@
 import { useLayoutEffect } from "react";
-import { PlusOutlined } from "@ant-design/icons";
 import { render } from "react-dom";
-import { Button, Space } from "antd";
-import styles from "./index.module.scss";
+import { Button, ConfigProvider, Space, theme } from "antd";
 import { getPublishedFileDetails } from "../../serives";
-const WorkshopHandleRow: React.FC<{ onAdd?: () => void }> = ({
+
+interface WorkshopHandleRowProps {
+  onAdd?: (parmas?: { publishedfileid: string }) => void;
+}
+const WorkshopHandleRow: React.FC<WorkshopHandleRowProps> = ({
   onAdd = () => {},
 }) => {
   return (
-    <Space>
-      <button
-        onClick={onAdd}
-        className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-1 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-      >
-        <PlusOutlined style={{ fontSize: 10 }} />
-      </button>
-    </Space>
+    <ConfigProvider
+      theme={{ algorithm: [theme.darkAlgorithm, theme.compactAlgorithm] }}
+    >
+      <Space>
+        <Button onClick={() => onAdd()}>添加</Button>
+      </Space>
+    </ConfigProvider>
   );
 };
-export const useReactiveUI = ({ add }: { add: (item: any) => void }) => {
+export const useReactiveUI = ({ onAdd }: WorkshopHandleRowProps) => {
   useLayoutEffect(() => {
     const rawItemEls = document.querySelectorAll(".workshopItem");
     rawItemEls.forEach((item) => {
@@ -34,20 +35,7 @@ export const useReactiveUI = ({ add }: { add: (item: any) => void }) => {
       const title = item.querySelector(".workshopItemTitle").textContent;
       render(
         <WorkshopHandleRow
-          onAdd={() => {
-            getPublishedFileDetails({
-              itemcount: 1,
-              publishedfileids: [publishId],
-            }).then((res) => {
-              console.log(res);
-            });
-            add({
-              preview_url: previewImageSrc,
-              isLeaf: true,
-              title,
-              key: publishId + "-" + new Date().getTime(),
-            });
-          }}
+          onAdd={() => onAdd({ publishedfileid: publishId })}
         />,
         div
       );

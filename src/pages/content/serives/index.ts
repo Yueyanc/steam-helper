@@ -9,6 +9,7 @@ import qs from "qs";
 import {
   GetCollectionsResponse,
   GetPublishedFileDetailsResponse,
+  SubscribedFilesDocumentParseResult,
 } from "../types";
 
 export const getPublishedFileDetails = (data: {
@@ -75,7 +76,7 @@ export const getAllUserSubscribedFiles = async ({
   onProgress?: (params: {
     total: number;
     current: number;
-    items: any[];
+    items: SubscribedFilesDocumentParseResult["items"];
   }) => void;
 }) => {
   let limit = 1;

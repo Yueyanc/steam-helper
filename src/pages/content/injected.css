@@ -1,8 +1,17 @@
-.ant-transfer-list-body{
-  overflow-y: auto;
-}
-.ant-tree-switcher-icon{
-  vertical-align:text-bottom !important;
+// .ant-transfer-list-body{
+//   overflow-y: auto;
+// }
+// .ant-tree-switcher-icon{
+//   vertical-align:text-bottom !important;
+// }
+// .ant-pro-table > .ant-pro-table-search{
+//   margin-bottom: 0;
+// }
+// .ant-pro-table{
+//   margin-top: 20px;
+// }
+.ant-pro-query-filter{
+  padding: 4px !important;
 }
 .ant-tree-checkbox{
   display: flex;

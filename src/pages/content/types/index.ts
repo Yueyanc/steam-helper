@@ -103,6 +103,7 @@ export interface PublishedFileDetails {
   views: number;
   visibility: number;
   collectionBy?: CollectionsDetail;
+  key?: string;
 }
 export interface GetPublishedFileDetailsResponse {
   response: {
@@ -119,4 +120,12 @@ export interface SideDrawerModSource {
   isLeaf: boolean;
   selectable: boolean;
   disabled: boolean;
+}
+export interface SubscribedFilesDocumentParseResult {
+  total: string | number;
+  items: {
+    key: string;
+    title: string;
+    preview_url: string;
+  }[];
 }
