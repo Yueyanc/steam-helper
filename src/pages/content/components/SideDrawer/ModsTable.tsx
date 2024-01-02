@@ -3,11 +3,13 @@ import {
   ProColumns,
   ProFormSelect,
   ProTable,
+  ProFormSwitch,
 } from "@ant-design/pro-components";
 import {
   addItemToCollection,
   getAllUserSubscribedFiles,
   getPublishedFileDetails,
+  getPublishedFileParseDetail,
   getUserCollections,
 } from "../../serives";
 import {
@@ -32,6 +34,44 @@ import {
 import { useReactiveUI } from "./hook";
 import { StorageKey } from "../../constant";
 import { Trans, useTranslation } from "react-i18next";
+async function addModToCollection({
+  id,
+  targetId,
+  subscribeDy = false,
+  success,
+}: {
+  id: string;
+  targetId: string;
+  subscribeDy?: boolean;
+  success?: (ids: string[]) => any;
+}) {
+  const sessionId = getSessionId();
+  let publishedfileids = [id];
+  if (subscribeDy) {
+    const { requiredItems } = await getPublishedFileParseDetail({ id });
+    publishedfileids = [
+      ...publishedfileids,
+      ...requiredItems.map((item) => item.id),
+    ];
+  }
+  console.log(publishedfileids);
+
+  await Promise.all(
+    publishedfileids.map((id) => {
+      addItemToCollection({
+        publishedfileid: id,
+        targetPublishedfileid: targetId,
+        sessionId,
+        type: "add",
+      }).then((res) => {
+        if (res.success === 1) {
+          if (success) success(publishedfileids);
+        }
+      });
+    })
+  );
+}
+
 const AddModalForm = ({
   onFinish,
   collections,
@@ -58,6 +98,7 @@ const AddModalForm = ({
           value: item.publishedfileid,
         }))}
       />
+      <ProFormSwitch label={t("自动添加依赖项目")} name="dependenceEnable" />
     </ModalForm>
   );
 };
@@ -135,11 +176,16 @@ const ModsTable: React.FC = () => {
     updateModSource();
   }, []);
   const columns: ProColumns<Partial<PublishedFileDetails>>[] = [
-    { title: t("mod"), dataIndex: "title", ellipsis: true },
+    {
+      title: t("mod"),
+      dataIndex: "title",
+      fixed: "left",
+    },
     {
       title: t("缩略图"),
       dataIndex: "preview_url",
       hideInSearch: true,
+      width: 100,
       render: (dom, entity) => (
         <Image
           onClick={(e) => {
@@ -154,6 +200,7 @@ const ModsTable: React.FC = () => {
       title: t("所属合集"),
       dataIndex: ["collectionBy", "title"],
       ellipsis: true,
+      width: 160,
       valueEnum: _.reduce(
         collections,
         (acc, item) => {
@@ -171,9 +218,21 @@ const ModsTable: React.FC = () => {
       sorter: (a, b) => a.subscriptions - b.subscriptions,
     },
     {
+      title: t("喜欢量"),
+      hideInSearch: true,
+      dataIndex: "favorited",
+      sorter: (a, b) => a.favorited - b.favorited,
+    },
+    {
+      title: t("浏览量"),
+      hideInSearch: true,
+      dataIndex: "views",
+      sorter: (a, b) => a.views - b.views,
+    },
+    {
       title: t("操作"),
       hideInSearch: true,
-      dataIndex: "title",
+      fixed: "right",
       render: (dom, entity) => {
         return (
           <Space>
@@ -233,10 +292,11 @@ const ModsTable: React.FC = () => {
     },
   ];
   const waitModColumns: ProColumns<Partial<PublishedFileDetails>>[] = [
-    { title: "mod", dataIndex: "title", ellipsis: true },
+    { title: "mod", dataIndex: "title", ellipsis: true, fixed: "left" },
     {
       title: t("缩略图"),
       dataIndex: "preview_url",
+      width: 100,
       hideInSearch: true,
       render: (dom, entity) => (
         <Image
@@ -255,9 +315,21 @@ const ModsTable: React.FC = () => {
       sorter: (a, b) => a.subscriptions - b.subscriptions,
     },
     {
+      title: t("喜欢量"),
+      hideInSearch: true,
+      dataIndex: "favorited",
+      sorter: (a, b) => a.favorited - b.favorited,
+    },
+    {
+      title: t("浏览量"),
+      hideInSearch: true,
+      dataIndex: "views",
+      sorter: (a, b) => a.views - b.views,
+    },
+    {
       title: t("操作"),
       hideInSearch: true,
-      dataIndex: "title",
+      fixed: "right",
       render: (dom, entity) => {
         return (
           <Space>
@@ -276,21 +348,19 @@ const ModsTable: React.FC = () => {
               collections={collections}
               trigger={<Button type="primary">{t("添加至合集")}</Button>}
               onFinish={async (values) => {
-                const { targetCollection } = values;
-                addItemToCollection({
-                  publishedfileid: entity.publishedfileid,
-                  targetPublishedfileid: targetCollection,
-                  sessionId,
-                  type: "add",
-                }).then((res) => {
-                  if (res.success === 1) {
+                const { targetCollection, dependenceEnable } = values;
+                await addModToCollection({
+                  id: entity.publishedfileid,
+                  targetId: targetCollection,
+                  subscribeDy: dependenceEnable,
+                  success: () => {
                     setWaitSource((pre) =>
                       pre.filter((item) => item.key !== entity.key)
                     );
-                  }
-                  updateModSource();
+                    updateModSource();
+                    message.success("添加成功");
+                  },
                 });
-                message.success("添加成功");
                 return true;
               }}
             />
@@ -306,6 +376,7 @@ const ModsTable: React.FC = () => {
           theme={{ algorithm: [theme.darkAlgorithm, theme.compactAlgorithm] }}
         >
           <ProTable<Partial<PublishedFileDetails>>
+            key="subscriptionMod"
             pagination={{
               pageSizeOptions: [10, 20, 50, 100, 200, 500],
               onShowSizeChange: (curent, size) => {
@@ -388,10 +459,11 @@ const ModsTable: React.FC = () => {
             rowKey={(item) =>
               `${item.publishedfileid}-${item.collectionBy.publishedfileid}`
             }
-            scroll={{ y: 300 }}
+            scroll={{ y: 300, x: 1000 }}
           />
-          <div className="mt-4">{t("待订阅mods")}:</div>
+          <div className="mt-4 text-white text-lg">{t("待订阅mods")}:</div>
           <ProTable<Partial<PublishedFileDetails>>
+            key="waitMod"
             columns={waitModColumns}
             pagination={{
               pageSizeOptions: [10, 20, 50, 100, 200],
@@ -434,22 +506,20 @@ const ModsTable: React.FC = () => {
                       <Button type="primary">{t("批量添加至合集")}</Button>
                     }
                     onFinish={async (values) => {
-                      const { targetCollection } = values;
+                      const { targetCollection, dependenceEnable } = values;
                       await Promise.all(
-                        selectedRows.map((row) => {
-                          return addItemToCollection({
-                            publishedfileid: row.publishedfileid,
-                            targetPublishedfileid: targetCollection,
-                            sessionId,
-                            type: "add",
-                          }).then((res) => {
-                            if (res.success === 1) {
+                        selectedRows.map((row) =>
+                          addModToCollection({
+                            id: row.publishedfileid,
+                            targetId: targetCollection,
+                            subscribeDy: dependenceEnable,
+                            success: () => {
                               setWaitSource((pre) =>
                                 pre.filter((item) => item.key !== row.key)
                               );
-                            }
-                          });
-                        })
+                            },
+                          })
+                        )
                       );
                       updateModSource();
                       message.success("添加成功");
@@ -483,7 +553,7 @@ const ModsTable: React.FC = () => {
             }}
             rowKey="key"
             virtual={waitSourceVirtual}
-            scroll={{ y: 300, x: 600 }}
+            scroll={{ y: 300, x: 1000 }}
             toolBarRender={() => [
               <Button
                 key="1"

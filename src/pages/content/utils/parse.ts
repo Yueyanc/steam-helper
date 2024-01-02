@@ -13,21 +13,21 @@ export const parseModDetailDocument = (htmlString: string) => {
     .thru((doc) => {
       return {
         title: _.chain(doc)
-          .thru((doc) => doc.querySelector("#workshopItemDetailsHeader"))
-          .thru((doc) => doc.querySelector(".workshopItemTitle"))
-          .thru((titleDom) => titleDom.textContent)
+          .thru((doc) => doc?.querySelector(".workshopItemDetailsHeader"))
+          .thru((doc) => doc?.querySelector(".workshopItemTitle"))
+          .thru((titleDom) => titleDom?.textContent)
           .value(),
         screenshots: _.chain(doc)
-          .thru((doc) => doc.querySelectorAll(".highlight_strip_screenshot"))
-          .map((dom) => dom.querySelector("img"))
-          .map((dom) => dom.getAttribute("src"))
+          .thru((doc) => doc?.querySelectorAll(".highlight_strip_screenshot"))
+          .map((dom) => dom?.querySelector("img"))
+          .map((dom) => dom?.getAttribute("src"))
           .value(),
         requiredItems: _.chain(doc)
-          .thru((doc) => doc.querySelector("#RequiredItems"))
-          .thru((doc) => doc.querySelectorAll("a"))
+          .thru((doc) => doc?.querySelector("#RequiredItems"))
+          .thru((doc) => doc?.querySelectorAll("a"))
           .map((aDom) => ({
-            id: aDom.getAttribute("href").split("id=")[1],
-            title: aDom.querySelector(".requiredItem").textContent,
+            id: aDom?.getAttribute("href")?.split("id=")?.[1],
+            title: aDom?.querySelector(".requiredItem")?.textContent,
           }))
           .value(),
       };

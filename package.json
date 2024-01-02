@@ -1,7 +1,7 @@
 {
   "name": "steam-workshop-helper",
-  "version": "1.0.2",
-  "description": "A chrome browser plugin that enhances the steam workshop  experience",
+  "version": "1.0.3",
+  "description": "A chrome browser plugin that enhances the steam workshop experience",
   "license": "MIT",
   "repository": {
     "type": "git",

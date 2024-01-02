@@ -15,6 +15,8 @@ const resources = {
       缩略图: "Thumbnail",
       所属合集: "Belongs to Collection",
       订阅量: "Subscriptions",
+      喜欢量: "favorited",
+      浏览量: "views",
       操作: "Actions",
       删除: "Delete",
       确定要删除并移动该模组吗: "Delete and move this mod",
@@ -24,6 +26,7 @@ const resources = {
       批量删除: "Batch Delete",
       批量添加至合集: "Batch Add to Collection",
       一键导入已订阅: "Import Subscriptions",
+      自动添加依赖项目: "Automatically add dependent Mods",
     },
   },
   zh: {
@@ -34,6 +37,8 @@ const resources = {
       缩略图: "缩略图",
       所属合集: "所属合集",
       订阅量: "订阅量",
+      喜欢量: "喜欢量",
+      浏览量: "浏览量",
       操作: "操作",
       删除: "删除",
       确定要删除并移动该模组吗: "确定要删除并移动该模组吗",
@@ -43,6 +48,7 @@ const resources = {
       批量删除: "批量删除",
       批量添加至合集: "批量添加至合集",
       一键导入已订阅: "一键导入已订阅",
+      自动添加依赖项目: "自动添加依赖项目",
     },
   },
 };
