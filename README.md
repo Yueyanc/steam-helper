@@ -1,61 +1,59 @@
-
 <div align="center">
   <img src="public/icon-128.png" alt="Logo" width="120" height="120" />
   <h2 align="center">Steam Helper</h2>
-
   <p align="center">
-    提升steam浏览体验的浏览器插件
+    A browser extension to enhance the browsing experience on Steam
   </p>
 </div>
 
-- 插件下载 [插件商店主页](https://chromewebstore.google.com/detail/steam-workshop-helper/chjgepafiallpimaokpingbicikicbip)
+**English** · [简体中文](./README.zh-CN.md) 
 
+- Download the extension from the [Chrome Extension Store](https://chromewebstore.google.com/detail/steam-workshop-helper/chjgepafiallpimaokpingbicikicbip)
 
+## 🎉 Features
 
+- 🥪 Quickly manage subscriptions in collections
+- 🎯 One-click import of subscribed mods
 
-## 🎉 特点
+## 🧤 Usage
 
-- 🥪快速管理集合中的订阅
-- 🎯一键导入已订阅的mods
-
-## 🧤 使用
-
-- 进入[chrome插件商店](https://chromewebstore.google.com/detail/steam-workshop-helper/chjgepafiallpimaokpingbicikicbip)下载，注意: chrome商店需要审核(一般为2-7天)，所以chrome插件商店不一定为最新代码版本.
+- Visit the [Chrome Web Store](https://chromewebstore.google.com/detail/steam-workshop-helper/chjgepafiallpimaokpingbicikicbip) to download the extension. Note: The Chrome Web Store requires a review process (usually 2-7 days), so it may not always have the latest version of the code.
 
 <!-- ROADMAP -->
 ## 🚊 Roadmap
 
-- [x] 添加mod集合的快捷操作
-- [ ] 添加集合的快捷创建删除
-- [ ] 添加已订阅mod管理
-- [ ] 添加商品历史价格显示
-- [x] 多语言支持
-    - [x] 中文
-    - [x] 英文
+- [x] Add quick actions for mod collections
+- [ ] Add shortcuts for creating and deleting collections
+- [ ] Add management for subscribed mods
+- [ ] Add display of historical prices for items
+- [x] Multi-language support
+    - [x] Chinese
+    - [x] English
 
-## 💻 技术栈
+## 🎫 Screenshots
+
+![preview1](/assets/preview1.png)
+
+## 💻 Tech Stack
 
 - React
-- typescript
-- tailwind
-- antd-pro
+- TypeScript
+- Tailwind CSS
+- Ant Design Pro
 
-## 🥔 开发
+## 🥔 Development
 
-基于[chrome-extension-boilerplate-react-vite](https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite)进行开发
-- 安装依赖 `pnpm i`
-- 运行项目 `pnpm run dev`
-- 安装拓展
-  - 在浏览器中打开- chrome://extensions
-  - 检查- Developer mode
-  - 查找并单击- Load unpacked extension
-  - 选择- dist 文件夹
-- 打包 `pnpm run build`
-
-
+Developed based on [chrome-extension-boilerplate-react-vite](https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite)
+- Install dependencies: `pnpm i`
+- Run the project: `pnpm run dev`
+- Install the extension:
+  - Open the browser and go to chrome://extensions
+  - Enable Developer mode
+  - Click on Load unpacked extension
+  - Select the dist folder
+- Build: `pnpm run build`
 
 <!-- LICENSE -->
-## 🍷 开源协议
+## 🍷 License
 
 MIT
-
