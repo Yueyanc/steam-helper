@@ -21,11 +21,17 @@ const manifest: chrome.runtime.ManifestV3 = {
     "128": "icon-128.png",
   },
   externally_connectable: {
-    matches: ["https://steamcommunity.com/*"],
+    matches: [
+      "https://steamcommunity.com/*",
+      "https://store.steampowered.com/*",
+    ],
   },
   content_scripts: [
     {
-      matches: ["https://steamcommunity.com/*"],
+      matches: [
+        "https://steamcommunity.com/*",
+        "https://store.steampowered.com/*",
+      ],
       js: ["src/pages/content/index.js"],
       // KEY for cache invalidation
       css: ["assets/css/contentStyle<KEY>.chunk.css"],
@@ -39,7 +45,10 @@ const manifest: chrome.runtime.ManifestV3 = {
         "icon-128.png",
         "icon-48.png",
       ],
-      matches: ["https://steamcommunity.com/*"],
+      matches: [
+        "https://steamcommunity.com/*",
+        "https://store.steampowered.com/*",
+      ],
     },
   ],
 };

@@ -4,8 +4,8 @@ export function getUrlSearchParams() {
   return new URLSearchParams(window.location.search);
 }
 export function getRecentlyAppId() {
-  const appHubs = Cookies.get("recentlyVisitedAppHubs").split(",");
-  return appHubs[appHubs.length - 1];
+  const appHubs = Cookies.get("recentlyVisitedAppHubs")?.split(",");
+  return appHubs?.[appHubs.length - 1];
 }
 export function getSessionId() {
   return Cookies.get("sessionid");

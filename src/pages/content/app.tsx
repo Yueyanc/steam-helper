@@ -5,12 +5,15 @@ import { StyleProvider } from "@ant-design/cssinjs";
 import { ConfigProvider, theme } from "antd";
 import injectedStyle from "./injected.css?inline";
 import { GlobalContext } from "./context";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { getLocalStorage } from "./utils";
 import { useTranslation } from "react-i18next";
 import zh from "antd/locale/zh_CN";
 import en from "antd/locale/en_US";
 import "./i18n";
+import InjectPrices from "./components/Prices";
+import { ConfigProviderProps } from "antd/es/config-provider";
+import _ from "lodash";
 
 function switchLang(lang: string) {
   let langData = zh;
@@ -39,6 +42,31 @@ attachTwindStyle(document.querySelector("body"), document);
 const styleElement = document.createElement("style");
 styleElement.innerHTML = injectedStyle;
 shadowRoot.appendChild(styleElement);
+
+interface Props {
+  children: any;
+}
+export const AntdConfigProvider: React.FC<ConfigProviderProps & Props> = ({
+  children,
+  ...props
+}) => {
+  const lang = getLocalStorage("i18nextLng");
+  const defaultProps = {
+    locale: switchLang(lang),
+    getPopupContainer: () => rootIntoShadow,
+    theme: {
+      algorithm: theme.darkAlgorithm,
+      components: {
+        Popover: {
+          zIndexPopup: 999,
+        },
+      },
+    },
+  };
+  const mergedProps = useMemo(() => _.merge(defaultProps, props), [props]);
+  return <ConfigProvider {...mergedProps}>{children}</ConfigProvider>;
+};
+
 function App() {
   const { t, i18n } = useTranslation();
   const lang = getLocalStorage("i18nextLng");
@@ -48,22 +76,16 @@ function App() {
   return (
     <StyleProvider container={shadowRoot}>
       <GlobalContext.Provider value={{ root: rootIntoShadow }}>
-        <ConfigProvider
-          locale={switchLang(lang)}
-          getPopupContainer={() => rootIntoShadow}
-          theme={{
-            algorithm: theme.darkAlgorithm,
-            components: {
-              Popover: {
-                zIndexPopup: 999,
-              },
-            },
-          }}
-        >
+        <AntdConfigProvider>
           <div>
-            <SideDrawer />
+            {window.location.href.startsWith(
+              "https://steamcommunity.com/app/"
+            ) && <SideDrawer />}
+            {window.location.href.startsWith(
+              "https://store.steampowered.com/app"
+            ) && <InjectPrices />}
           </div>
-        </ConfigProvider>
+        </AntdConfigProvider>
       </GlobalContext.Provider>
     </StyleProvider>
   );
