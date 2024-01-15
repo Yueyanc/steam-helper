@@ -5,7 +5,7 @@ import { StyleProvider } from "@ant-design/cssinjs";
 import { ConfigProvider, theme } from "antd";
 import injectedStyle from "./injected.css?inline";
 import { GlobalContext } from "./context";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getLocalStorage } from "./utils";
 import { useTranslation } from "react-i18next";
 import zh from "antd/locale/zh_CN";
@@ -14,18 +14,6 @@ import "./i18n";
 import InjectPrices from "./components/Prices";
 import { ConfigProviderProps } from "antd/es/config-provider";
 import _ from "lodash";
-
-function switchLang(lang: string) {
-  let langData = zh;
-  switch (lang) {
-    case "en":
-      langData = en;
-      break;
-    default:
-      break;
-  }
-  return langData;
-}
 
 const root = document.createElement("div");
 root.id = "steam-workshop-helper";
@@ -50,9 +38,8 @@ export const AntdConfigProvider: React.FC<ConfigProviderProps & Props> = ({
   children,
   ...props
 }) => {
-  const lang = getLocalStorage("i18nextLng");
+  const [lang, setLang] = useState("zh");
   const defaultProps = {
-    locale: switchLang(lang),
     getPopupContainer: () => rootIntoShadow,
     theme: {
       algorithm: theme.darkAlgorithm,
@@ -63,16 +50,19 @@ export const AntdConfigProvider: React.FC<ConfigProviderProps & Props> = ({
       },
     },
   };
-  const mergedProps = useMemo(() => _.merge(defaultProps, props), [props]);
+  useEffect(() => {
+    chrome.i18n.getAcceptLanguages((langs) => {
+      setLang(langs?.[0]?.split("-")?.[0] ?? "zh");
+    });
+  }, []);
+  const mergedProps = useMemo(
+    () => _.merge(defaultProps, props, { locale: lang }),
+    [props, lang]
+  );
   return <ConfigProvider {...mergedProps}>{children}</ConfigProvider>;
 };
 
 function App() {
-  const { t, i18n } = useTranslation();
-  const lang = getLocalStorage("i18nextLng");
-  useEffect(() => {
-    i18n.changeLanguage(lang);
-  }, []);
   return (
     <StyleProvider container={shadowRoot}>
       <GlobalContext.Provider value={{ root: rootIntoShadow }}>
@@ -90,11 +80,5 @@ function App() {
     </StyleProvider>
   );
 }
-/**
- * https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite/pull/174
- *
- * In the firefox environment, the adoptedStyleSheets bug may prevent contentStyle from being applied properly.
- * Please refer to the PR link above and go back to the contentStyle.css implementation, or raise a PR if you have a better way to improve it.
- */
 
 createRoot(rootIntoShadow).render(<App />);

@@ -1,0 +1,92 @@
+{
+  "add_to_collection": {
+    "message": "Add to Collection"
+  },
+  "target_collection": {
+    "message": "Target Collection"
+  },
+  "mod": {
+    "message": "Mod"
+  },
+  "thumbnail": {
+    "message": "Thumbnail"
+  },
+  "belongs_to_collection": {
+    "message": "Belongs to Collection"
+  },
+  "subscriptions": {
+    "message": "Subscriptions"
+  },
+  "favorited": {
+    "message": "favorited"
+  },
+  "views": {
+    "message": "views"
+  },
+  "actions": {
+    "message": "Actions"
+  },
+  "delete": {
+    "message": "Delete"
+  },
+  "delete_and_move_this_mod": {
+    "message": "Delete and move this mod"
+  },
+  "delete_to_subscriptions": {
+    "message": "Delete to Subscriptions"
+  },
+  "delete_this_mod": {
+    "message": "Delete this mod"
+  },
+  "subscribed_mods": {
+    "message": "Subscribed Mods"
+  },
+  "batch_delete": {
+    "message": "Batch Delete"
+  },
+  "batch_add_to_collection": {
+    "message": "Batch Add to Collection"
+  },
+  "import_subscriptions": {
+    "message": "Import Subscriptions"
+  },
+  "automatically_add_dependent_mods": {
+    "message": "Automatically add dependent Mods"
+  },
+  "us": {
+    "message": "United States"
+  },
+  "cn": {
+    "message": "China"
+  },
+  "jp": {
+    "message": "Japan"
+  },
+  "de": {
+    "message": "Germany"
+  },
+  "gb": {
+    "message": "United Kingdom"
+  },
+  "fr": {
+    "message": "France"
+  },
+  "ru": {
+    "message": "Russia"
+  },
+  "br": {
+    "message": "Brazil"
+  },
+  "in": {
+    "message": "India"
+  },
+  "au": {
+    "message": "Australia"
+  },
+  "tr": {
+    "message": "Turkey"
+  },
+  "ar": {
+    "message": "Argentina"
+  }
+}

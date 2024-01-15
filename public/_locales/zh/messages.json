@@ -1,0 +1,92 @@
+{
+  "add_to_collection": {
+    "message": "添加至合集"
+  },
+  "target_collection": {
+    "message": "目标合集"
+  },
+  "mod": {
+    "message": "Mod"
+  },
+  "thumbnail": {
+    "message": "缩略图"
+  },
+  "belongs_to_collection": {
+    "message": "所属合集"
+  },
+  "subscriptions": {
+    "message": "订阅量"
+  },
+  "favorited": {
+    "message": "喜欢量"
+  },
+  "views": {
+    "message": "浏览量"
+  },
+  "actions": {
+    "message": "操作"
+  },
+  "delete": {
+    "message": "删除"
+  },
+  "delete_and_move_this_mod": {
+    "message": "确定要删除并移动该模组吗"
+  },
+  "delete_to_subscriptions": {
+    "message": "删除至待订阅"
+  },
+  "delete_this_mod": {
+    "message": "确定要删除该模组吗"
+  },
+  "subscribed_mods": {
+    "message": "待订阅mods"
+  },
+  "batch_delete": {
+    "message": "批量删除"
+  },
+  "batch_add_to_collection": {
+    "message": "批量添加至合集"
+  },
+  "import_subscriptions": {
+    "message": "一键导入已订阅"
+  },
+  "automatically_add_dependent_mods": {
+    "message": "自动添加依赖项目"
+  },
+  "us": {
+    "message": "美国"
+  },
+  "cn": {
+    "message": "中国"
+  },
+  "jp": {
+    "message": "日本"
+  },
+  "de": {
+    "message": "德国"
+  },
+  "gb": {
+    "message": "英国"
+  },
+  "fr": {
+    "message": "法国"
+  },
+  "ru": {
+    "message": "俄罗斯"
+  },
+  "br": {
+    "message": "巴西"
+  },
+  "in": {
+    "message": "印度"
+  },
+  "au": {
+    "message": "澳大利亚"
+  },
+  "tr": {
+    "message": "土耳其"
+  },
+  "ar": {
+    "message": "阿根廷"
+  }
+}

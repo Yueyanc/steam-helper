@@ -3,12 +3,14 @@ import {
   getUerIdLocal,
   parseModDetailDocument,
   parseSubscribedFilesDocument,
+  requestByBackground,
 } from "../utils";
 import request from "../utils/request";
 import qs from "qs";
 import {
   GetCollectionsResponse,
   GetPublishedFileDetailsResponse,
+  GetUserSubscribedFilesParams,
   SubscribedFilesDocumentParseResult,
 } from "../types";
 
@@ -47,11 +49,7 @@ export const getUserId = () => {
     return chunks[chunks.length - 2];
   });
 };
-interface GetUserSubscribedFilesParams {
-  appId: string;
-  page: number;
-  numperpage: number;
-}
+
 export const getUserSubscribedFiles = async ({
   appId,
   page,
@@ -131,11 +129,35 @@ export const addItemToCollection = (rawData: {
   );
 };
 
+const ITADKey = "a3796f125da6ccaa2e16bc7170141364279dfeda";
 // prices
-
-export function getPricesDetail() {
-  // return request<any, any>(
-  //   "https://api.isthereanydeal.com/v01/game/overview/",
-  //   {}
-  // );
+export function getPlain(params: { id: string }) {
+  return requestByBackground({
+    url: "https://api.isthereanydeal.com/v02/game/plain/",
+    method: "GET",
+    params: { key: ITADKey, shop: "steam", game_id: `app/${params.id}` },
+  });
+}
+export function getCurrentPrices(params: { id: string; country: string }) {
+  return request("https://store.steampowered.com/api/packagedetails", {
+    params: { packageids: params.id, cc: params.country },
+  });
+}
+export function getPriceOverview(params: {
+  plain: string;
+  country: string;
+  ids: string[];
+}) {
+  const { ids, ...rst } = params;
+  return requestByBackground({
+    url: " https://api.isthereanydeal.com/v01/game/overview/",
+    method: "GET",
+    params: {
+      key: ITADKey,
+      shop: "steam",
+      allowed: "steam",
+      ids: ids.map((id) => `app/${id}`).join(","),
+      ...rst,
+    },
+  });
 }

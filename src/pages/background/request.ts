@@ -1,6 +1,8 @@
 import axios from "axios";
-
-const axiosInstance = axios.create({});
+import fetchAdapter from "@haverstack/axios-fetch-adapter";
+const axiosInstance = axios.create({
+  adapter: fetchAdapter,
+});
 axiosInstance.interceptors.request.use((config) => {
   return config;
 });

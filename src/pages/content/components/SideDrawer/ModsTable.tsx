@@ -34,6 +34,8 @@ import {
 import { useReactiveUI } from "./hook";
 import { StorageKey } from "../../constant";
 import { Trans, useTranslation } from "react-i18next";
+import { i18n } from "@root/src/chrome/i18n";
+
 async function addModToCollection({
   id,
   targetId,
@@ -82,26 +84,29 @@ const AddModalForm = ({
   collections: CollectionsDetail[];
 }) => {
   const sessionId = getSessionId();
-  const { t, i18n } = useTranslation();
   return (
     <ModalForm
       modalProps={{ centered: true, width: 200 }}
       onFinish={onFinish}
-      title={t("添加至合集")}
+      title={i18n("add_to_collection")}
       trigger={trigger}
     >
       <ProFormSelect
         name="targetCollection"
-        label={t("目标合集")}
+        label={i18n("target_collection")}
         options={collections.map((item) => ({
           label: item.title,
           value: item.publishedfileid,
         }))}
       />
-      <ProFormSwitch label={t("自动添加依赖项目")} name="dependenceEnable" />
+      <ProFormSwitch
+        label={i18n("automatically_add_dependent_mods")}
+        name="dependenceEnable"
+      />
     </ModalForm>
   );
 };
+
 const ModsTable: React.FC = () => {
   useReactiveUI({
     onAdd: ({ publishedfileid }) => {
@@ -121,7 +126,6 @@ const ModsTable: React.FC = () => {
     },
   });
   const appId = getRecentlyAppId();
-  const { t, i18n } = useTranslation();
   const sessionId = getSessionId();
   const [collections, setCollections] = useState<CollectionsDetail[]>([]);
   const [subscriptionSource, setSubscriptionSource] = useState<
@@ -177,12 +181,12 @@ const ModsTable: React.FC = () => {
   }, []);
   const columns: ProColumns<Partial<PublishedFileDetails>>[] = [
     {
-      title: t("mod"),
+      title: i18n("mod"),
       dataIndex: "title",
       fixed: "left",
     },
     {
-      title: t("缩略图"),
+      title: i18n("thumbnail"),
       dataIndex: "preview_url",
       hideInSearch: true,
       width: 100,
@@ -197,7 +201,7 @@ const ModsTable: React.FC = () => {
       ),
     },
     {
-      title: t("所属合集"),
+      title: i18n("belongs_to_collection"),
       dataIndex: ["collectionBy", "title"],
       ellipsis: true,
       width: 160,
@@ -212,33 +216,33 @@ const ModsTable: React.FC = () => {
       ),
     },
     {
-      title: t("订阅量"),
+      title: i18n("subscriptions"),
       hideInSearch: true,
       dataIndex: "subscriptions",
       sorter: (a, b) => a.subscriptions - b.subscriptions,
     },
     {
-      title: t("喜欢量"),
+      title: i18n("favorited"),
       hideInSearch: true,
       dataIndex: "favorited",
       sorter: (a, b) => a.favorited - b.favorited,
     },
     {
-      title: t("浏览量"),
+      title: i18n("views"),
       hideInSearch: true,
       dataIndex: "views",
       sorter: (a, b) => a.views - b.views,
     },
     {
-      title: t("操作"),
+      title: i18n("actions"),
       hideInSearch: true,
       fixed: "right",
       render: (dom, entity) => {
         return (
           <Space>
             <Popconfirm
-              title={t("删除")}
-              description={t("你确定要删除并且移动该mod吗") + "?"}
+              title={i18n("delete")}
+              description={i18n("delete_and_move_this_mod") + "?"}
               onConfirm={() =>
                 addItemToCollection({
                   publishedfileid: entity.publishedfileid,
@@ -261,11 +265,11 @@ const ModsTable: React.FC = () => {
                 })
               }
             >
-              <Button type="link">{t("删除至待订阅")}</Button>
+              <Button type="link">{i18n("delete_to_subscriptions")}</Button>
             </Popconfirm>
             <Popconfirm
-              title={t("删除")}
-              description={t("你确定要删除该mod吗") + "?"}
+              title={i18n("delete")}
+              description={i18n("delete_this_mod") + "?"}
               onConfirm={() =>
                 addItemToCollection({
                   publishedfileid: entity.publishedfileid,
@@ -284,7 +288,7 @@ const ModsTable: React.FC = () => {
                 })
               }
             >
-              <Button type="link">{t("删除")}</Button>
+              <Button type="link">{i18n("delete")}</Button>
             </Popconfirm>
           </Space>
         );
@@ -292,9 +296,9 @@ const ModsTable: React.FC = () => {
     },
   ];
   const waitModColumns: ProColumns<Partial<PublishedFileDetails>>[] = [
-    { title: "mod", dataIndex: "title", ellipsis: true, fixed: "left" },
+    { title: i18n("mod"), dataIndex: "title", ellipsis: true, fixed: "left" },
     {
-      title: t("缩略图"),
+      title: i18n("thumbnail"),
       dataIndex: "preview_url",
       width: 100,
       hideInSearch: true,
@@ -309,44 +313,46 @@ const ModsTable: React.FC = () => {
       ),
     },
     {
-      title: t("订阅量"),
+      title: i18n("subscriptions"),
       hideInSearch: true,
       dataIndex: "subscriptions",
       sorter: (a, b) => a.subscriptions - b.subscriptions,
     },
     {
-      title: t("喜欢量"),
+      title: i18n("favorited"),
       hideInSearch: true,
       dataIndex: "favorited",
       sorter: (a, b) => a.favorited - b.favorited,
     },
     {
-      title: t("浏览量"),
+      title: i18n("views"),
       hideInSearch: true,
       dataIndex: "views",
       sorter: (a, b) => a.views - b.views,
     },
     {
-      title: t("操作"),
+      title: i18n("actions"),
       hideInSearch: true,
       fixed: "right",
       render: (dom, entity) => {
         return (
           <Space>
             <Popconfirm
-              title={t("删除")}
-              description={t("你确定要删除该mod吗") + "?"}
+              title={i18n("delete")}
+              description={i18n("delete_this_mod") + "?"}
               onConfirm={() => {
                 setWaitSource((pre) =>
                   pre.filter((item) => item.key !== entity.key)
                 );
               }}
             >
-              <Button type="link">{t("删除")}</Button>
+              <Button type="link">{i18n("delete")}</Button>
             </Popconfirm>
             <AddModalForm
               collections={collections}
-              trigger={<Button type="primary">{t("添加至合集")}</Button>}
+              trigger={
+                <Button type="primary">{i18n("add_to_collection")}</Button>
+              }
               onFinish={async (values) => {
                 const { targetCollection, dependenceEnable } = values;
                 await addModToCollection({
@@ -400,8 +406,8 @@ const ModsTable: React.FC = () => {
               return (
                 <Space size={16}>
                   <Popconfirm
-                    title={t("删除")}
-                    description={t("你确定要删除该mod吗") + "?"}
+                    title={i18n("delete")}
+                    description={i18n("delete_this_mod") + "?"}
                     onConfirm={() => {
                       selectedRows.forEach((row) => {
                         addItemToCollection({
@@ -423,7 +429,7 @@ const ModsTable: React.FC = () => {
                       });
                     }}
                   >
-                    <Button type="link">{t("批量删除")}</Button>
+                    <Button type="link">{i18n("batch_delete")}</Button>
                   </Popconfirm>
                 </Space>
               );
@@ -461,7 +467,9 @@ const ModsTable: React.FC = () => {
             }
             scroll={{ y: 300, x: 1000 }}
           />
-          <div className="mt-4 text-white text-lg">{t("待订阅mods")}:</div>
+          <div className="mt-4 text-white text-lg">
+            {i18n("subscribed_mods")}:
+          </div>
           <ProTable<Partial<PublishedFileDetails>>
             key="waitMod"
             columns={waitModColumns}
@@ -485,8 +493,8 @@ const ModsTable: React.FC = () => {
               return (
                 <Space size={16}>
                   <Popconfirm
-                    title={t("删除")}
-                    description={t("你确定要删除该mod吗") + "?"}
+                    title={i18n("delete")}
+                    description={i18n("delete_this_mod") + "?"}
                     onConfirm={() => {
                       setWaitSource((pre) =>
                         pre.filter(
@@ -498,12 +506,14 @@ const ModsTable: React.FC = () => {
                       );
                     }}
                   >
-                    <Button type="link">{t("批量删除")}</Button>
+                    <Button type="link">{i18n("batch_delete")}</Button>
                   </Popconfirm>
                   <AddModalForm
                     collections={collections}
                     trigger={
-                      <Button type="primary">{t("批量添加至合集")}</Button>
+                      <Button type="primary">
+                        {i18n("batch_add_to_collection")}
+                      </Button>
                     }
                     onFinish={async (values) => {
                       const { targetCollection, dependenceEnable } = values;
@@ -581,7 +591,7 @@ const ModsTable: React.FC = () => {
                   });
                 }}
               >
-                {t("一键导入已订阅")}
+                {i18n("import_subscriptions")}
               </Button>,
             ]}
           />

@@ -129,3 +129,8 @@ export interface SubscribedFilesDocumentParseResult {
     preview_url: string;
   }[];
 }
+export interface GetUserSubscribedFilesParams {
+  appId: string;
+  page: number;
+  numperpage: number;
+}

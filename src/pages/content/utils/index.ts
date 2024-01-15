@@ -1,5 +1,10 @@
 import Cookies from "js-cookie";
 import { getUserId } from "../serives";
+import { AxiosRequestConfig } from "axios";
+import { Cashify } from "cashify";
+import _ from "lodash";
+import { currencyUnit } from "./currencyUnit";
+export * from "./parse";
 export function getUrlSearchParams() {
   return new URLSearchParams(window.location.search);
 }
@@ -38,4 +43,34 @@ export const clearLocalStorage = (key: string[]) => {
     window.localStorage.removeItem(item);
   });
 };
-export * from "./parse";
+
+export const requestByBackground = (options: AxiosRequestConfig) => {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage({ type: "request", options }, (response) => {
+      // 3. Got an asynchronous response with the data from the service worker
+      console.log("received user data", response);
+      resolve(response);
+    });
+  });
+};
+
+const cashify = new Cashify({ base: "USD" });
+export const convert = (function () {
+  chrome.runtime.sendMessage(
+    { type: "get", options: "exchange_rate" },
+    (response) => {
+      const rates = _.get(response, ["exchange_rate", "rates"]);
+      if (rates) cashify.options.rates = rates;
+    }
+  );
+  return (count: number, options: { from: string; to: string }) => {
+    const keys = _.keys(cashify.options.rates);
+    if (keys.includes(options.from) && keys.includes(options.to)) {
+      return cashify.convert(count, options);
+    }
+    return count;
+  };
+})();
+export const getCurrencyUnit = (currency: string) => {
+  return currencyUnit[currency] ?? "";
+};

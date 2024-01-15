@@ -1,5 +1,7 @@
 import reloadOnUpdate from "virtual:reload-on-update-in-background-script";
-
+import request from "./request";
+import { get } from "lodash";
+import dayjs from "dayjs";
 reloadOnUpdate("pages/background");
 
 /**
@@ -7,5 +9,38 @@ reloadOnUpdate("pages/background");
  * If you do not use the css of the content script, please delete it.
  */
 reloadOnUpdate("pages/content/style.scss");
+reloadOnUpdate("public/_locales");
 
 console.log("background loaded");
+
+// 获取当天最新汇率
+chrome.storage.local.get("exchange_rate", (item) => {
+  const dateString = get(item, ["exchange_rate", "date"]);
+  if (dayjs().format("YYYY-MM-DD") === dateString) return;
+  request({ url: "https://api.exchangerate-api.com/v4/latest/USD" }).then(
+    async (res) => {
+      console.log(res);
+      chrome.storage.local.set({ exchange_rate: res });
+    }
+  );
+});
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log(`getMessage---- type:${message.type}`, message);
+
+  if (message.type === "request") {
+    request(message.options).then((res) => {
+      console.log(res);
+      sendResponse(res);
+    });
+  }
+  if (message.type === "get") {
+    chrome.storage.local.get(message.options, (item) => {
+      console.log(item);
+      sendResponse(item);
+    });
+    return true;
+  }
+  if (message.type === "get") {
+    chrome.storage.local.set(message.options);
+  }
+});
