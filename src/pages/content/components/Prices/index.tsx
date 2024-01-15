@@ -6,55 +6,109 @@ import { Collapse, theme } from "antd";
 import { getPlain, getCurrentPrices, getPriceOverview } from "../../serives";
 import _ from "lodash";
 import { i18n } from "@root/src/chrome/i18n";
-import { convert, getCurrencyUnit } from "../../utils";
+import { convert, getCurrencyByCountry, getCurrencyUnit } from "../../utils";
+import { defaultCountry } from "../../utils/countryMap";
 
 const defaultCurrency = "USD";
 interface Props {
   id: string;
 }
-const defaultCountry = ["tr", "ar", "cn", "jp", "us", "ru", "gb"];
+
 const Prices: React.FC<Props> = ({ id }) => {
   const [plain, setPlain] = useState();
   const [dataSource, setDataSource] = useState([]);
   const columns: ProColumns<any, any>[] = [
-    { title: "地区", dataIndex: "country" },
+    {
+      title: "地区",
+      dataIndex: "country",
+      render: (dom, entity) => {
+        return entity.country && i18n(entity.country);
+      },
+    },
     {
       title: "当前价格",
       dataIndex: "final",
       render(dom, entity, index, action, schema) {
-        return `${getCurrencyUnit(defaultCurrency)}${convert(
-          entity.final / 100,
-          {
-            from: entity.currency,
-            to: defaultCurrency,
-          }
-        ).toFixed(2)} ${defaultCurrency}`;
+        return (
+          <div>
+            {`${getCurrencyUnit(defaultCurrency)} ${convert(
+              _.get(entity, ["final"]) / 100,
+              {
+                from: entity.currency,
+                to: defaultCurrency,
+              }
+            )?.toFixed(2)}`}
+          </div>
+        );
       },
       sorter: (a, b) =>
         convert(a.final, { from: a.currency, to: defaultCurrency }) -
         convert(b.final, { from: b.currency, to: defaultCurrency }),
     },
-    { title: "折扣力度", dataIndex: "discount_percent" },
+    {
+      title: "当前折扣",
+      dataIndex: "discount_percent",
+      render(dom, entity, index, action, schema) {
+        return entity.discount_percent + "%";
+      },
+    },
+    {
+      title: "史低",
+      dataIndex: ["lowest", "price"],
+      render(dom, entity, index, action, schema) {
+        return (
+          <div>
+            {entity.lowest
+              ? `${getCurrencyUnit(defaultCurrency)} ${convert(
+                  _.get(entity, ["lowest", "price"]),
+                  {
+                    from: entity.meta.currency,
+                    to: defaultCurrency,
+                  }
+                )?.toFixed(2)}`
+              : "null"}
+          </div>
+        );
+      },
+    },
+    {
+      title: "史低折扣",
+      dataIndex: ["lowest", "cut"],
+      render(dom, entity, index, action, schema) {
+        return _.get(entity, ["lowest", "cut"]) + "%";
+      },
+    },
+    {
+      title: "上次史低时间",
+      dataIndex: ["lowest", "recorded_formatted"],
+    },
   ];
   useEffect(() => {
-    // getPlain({ id }).then((res) => {
-    //   setPlain(_.get(res, ["data", "plain"]));
-    // });
-    defaultCountry.forEach((country) => {
-      getCurrentPrices({ id, country }).then((res) => {
-        console.log(res);
-        if (res?.[id]?.success) {
-          const data = res[id].data;
-          setDataSource((pre) => [
-            ...pre,
-            { country: i18n(country as any), ...data.price },
-          ]);
-        }
-      });
+    defaultCountry.forEach(async (country) => {
+      const prices = await getCurrentPrices({ id, country });
+      let rowData = {};
+
+      if (_.get(prices, [id, "data"])) {
+        const data = prices[id].data;
+        rowData = { country, ...data.price };
+      } else {
+        return;
+      }
+      const otherPrices = (await getPriceOverview({
+        country,
+        ids: [id],
+      })) as any;
+      const value = _.values(otherPrices.data)?.[0];
+      const lowest = _.get(value, ["lowest"]);
+      if (lowest) {
+        rowData = {
+          ...rowData,
+          meta: otherPrices[".meta"],
+          lowest,
+        };
+      }
+      setDataSource((pre) => [...pre, rowData]);
     });
-    // getPriceOverview({ plain, country: "tr", ids: [id] }).then((res) => {
-    //   console.log(res);
-    // });
   }, [id]);
   return (
     <AntdConfigProvider

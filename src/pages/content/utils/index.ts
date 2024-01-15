@@ -4,6 +4,7 @@ import { AxiosRequestConfig } from "axios";
 import { Cashify } from "cashify";
 import _ from "lodash";
 import { currencyUnit } from "./currencyUnit";
+import { countryMap } from "./countryMap";
 export * from "./parse";
 export function getUrlSearchParams() {
   return new URLSearchParams(window.location.search);
@@ -47,8 +48,6 @@ export const clearLocalStorage = (key: string[]) => {
 export const requestByBackground = (options: AxiosRequestConfig) => {
   return new Promise((resolve) => {
     chrome.runtime.sendMessage({ type: "request", options }, (response) => {
-      // 3. Got an asynchronous response with the data from the service worker
-      console.log("received user data", response);
       resolve(response);
     });
   });
@@ -73,4 +72,7 @@ export const convert = (function () {
 })();
 export const getCurrencyUnit = (currency: string) => {
   return currencyUnit[currency] ?? "";
+};
+export const getCurrencyByCountry = (country: string) => {
+  return countryMap[country] ?? "";
 };

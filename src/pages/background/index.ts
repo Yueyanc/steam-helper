@@ -1,7 +1,7 @@
 import reloadOnUpdate from "virtual:reload-on-update-in-background-script";
 import request from "./request";
-import { get } from "lodash";
 import dayjs from "dayjs";
+import _ from "lodash";
 reloadOnUpdate("pages/background");
 
 /**
@@ -15,7 +15,7 @@ console.log("background loaded");
 
 // 获取当天最新汇率
 chrome.storage.local.get("exchange_rate", (item) => {
-  const dateString = get(item, ["exchange_rate", "date"]);
+  const dateString = _.get(item, ["exchange_rate", "date"]);
   if (dayjs().format("YYYY-MM-DD") === dateString) return;
   request({ url: "https://api.exchangerate-api.com/v4/latest/USD" }).then(
     async (res) => {
@@ -29,9 +29,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === "request") {
     request(message.options).then((res) => {
-      console.log(res);
-      sendResponse(res);
+      if (res) sendResponse(res);
     });
+    return true;
   }
   if (message.type === "get") {
     chrome.storage.local.get(message.options, (item) => {

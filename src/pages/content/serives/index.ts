@@ -144,7 +144,7 @@ export function getCurrentPrices(params: { id: string; country: string }) {
   });
 }
 export function getPriceOverview(params: {
-  plain: string;
+  plain?: string;
   country: string;
   ids: string[];
 }) {
@@ -156,7 +156,7 @@ export function getPriceOverview(params: {
       key: ITADKey,
       shop: "steam",
       allowed: "steam",
-      ids: ids.map((id) => `app/${id}`).join(","),
+      ids: ids.map((id) => `sub/${id}`).join(","),
       ...rst,
     },
   });
