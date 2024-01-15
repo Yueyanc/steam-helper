@@ -94,19 +94,26 @@ const Prices: React.FC<Props> = ({ id }) => {
       } else {
         return;
       }
-      const otherPrices = (await getPriceOverview({
-        country,
-        ids: [id],
-      })) as any;
-      const value = _.values(otherPrices.data)?.[0];
-      const lowest = _.get(value, ["lowest"]);
-      if (lowest) {
-        rowData = {
-          ...rowData,
-          meta: otherPrices[".meta"],
-          lowest,
-        };
+      try {
+        const otherPrices = (await getPriceOverview({
+          country,
+          ids: [id],
+        })) as any;
+        const value = _.values(otherPrices?.data)?.[0];
+        const lowest = _.get(value, ["lowest"]);
+        if (lowest) {
+          rowData = {
+            ...rowData,
+            meta: otherPrices[".meta"],
+            lowest,
+          };
+        }
+      } catch (error) {
+        console.log(error);
       }
+
+      console.log(rowData);
+
       setDataSource((pre) => [...pre, rowData]);
     });
   }, [id]);
@@ -120,7 +127,7 @@ const Prices: React.FC<Props> = ({ id }) => {
       }}
     >
       <Collapse
-        className="my-4"
+        className="my-2 mt-6"
         items={[
           {
             key: "1",

@@ -46,9 +46,13 @@ export const clearLocalStorage = (key: string[]) => {
 };
 
 export const requestByBackground = (options: AxiosRequestConfig) => {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage({ type: "request", options }, (response) => {
-      resolve(response);
+      if (response.type !== "error") {
+        resolve(response);
+      } else {
+        reject();
+      }
     });
   });
 };

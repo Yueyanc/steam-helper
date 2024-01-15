@@ -28,9 +28,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log(`getMessage---- type:${message.type}`, message);
 
   if (message.type === "request") {
-    request(message.options).then((res) => {
-      if (res) sendResponse(res);
-    });
+    request(message.options)
+      .then((res) => {
+        if (res) sendResponse(res);
+      })
+      .catch((err) => {
+        sendResponse({ type: "error" });
+      });
     return true;
   }
   if (message.type === "get") {
