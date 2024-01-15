@@ -20,7 +20,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@ant-design/cssinjs": "^1.17.5",
+    "@ant-design/cssinjs": "^1.18.2",
     "@ant-design/icons": "^5.2.6",
     "@ant-design/pro-components": "^2.6.43",
     "@haverstack/axios-fetch-adapter": "^0.12.0",
