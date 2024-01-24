@@ -13,20 +13,19 @@ const defaultCurrency = "USD";
 interface Props {
   id: string;
 }
-
 const Prices: React.FC<Props> = ({ id }) => {
   const [plain, setPlain] = useState();
   const [dataSource, setDataSource] = useState([]);
   const columns: ProColumns<any, any>[] = [
     {
-      title: "地区",
+      title: i18n("region"),
       dataIndex: "country",
       render: (dom, entity) => {
         return entity.country && i18n(entity.country);
       },
     },
     {
-      title: "当前价格",
+      title: i18n("current_price"),
       dataIndex: "final",
       render(dom, entity, index, action, schema) {
         return (
@@ -46,14 +45,14 @@ const Prices: React.FC<Props> = ({ id }) => {
         convert(b.final, { from: b.currency, to: defaultCurrency }),
     },
     {
-      title: "当前折扣",
+      title: i18n("current_discount"),
       dataIndex: "discount_percent",
       render(dom, entity, index, action, schema) {
         return entity.discount_percent + "%";
       },
     },
     {
-      title: "史低",
+      title: i18n("historical_low"),
       dataIndex: ["lowest", "price"],
       render(dom, entity, index, action, schema) {
         return (
@@ -72,14 +71,14 @@ const Prices: React.FC<Props> = ({ id }) => {
       },
     },
     {
-      title: "史低折扣",
+      title: i18n("historical_low_discount"),
       dataIndex: ["lowest", "cut"],
       render(dom, entity, index, action, schema) {
         return _.get(entity, ["lowest", "cut"]) + "%";
       },
     },
     {
-      title: "上次史低时间",
+      title: i18n("last_historical_low_time"),
       dataIndex: ["lowest", "recorded_formatted"],
     },
   ];
@@ -131,7 +130,7 @@ const Prices: React.FC<Props> = ({ id }) => {
         items={[
           {
             key: "1",
-            label: "多国价格对比",
+            label: i18n("multi_country_price_comparison"),
             children: (
               <ProTable
                 dataSource={dataSource}

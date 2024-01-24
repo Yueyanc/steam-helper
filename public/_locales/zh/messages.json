@@ -88,5 +88,26 @@
   },
   "ar": {
     "message": "阿根廷"
+  },
+  "region": {
+    "message": "地区"
+  },
+  "current_price": {
+    "message": "当前价格"
+  },
+  "current_discount": {
+    "message": "当前折扣"
+  },
+  "historical_low": {
+    "message": "史低"
+  },
+  "historical_low_discount": {
+    "message": "史低折扣"
+  },
+  "last_historical_low_time": {
+    "message": "上次史低时间"
+  },
+  "multi_country_price_comparison": {
+    "message": "多国价格对比"
   }
 }

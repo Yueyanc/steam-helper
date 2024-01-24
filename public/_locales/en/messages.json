@@ -88,5 +88,26 @@
   },
   "ar": {
     "message": "Argentina"
+  },
+  "region": {
+    "message": "Region"
+  },
+  "current_price": {
+    "message": "Current Price"
+  },
+  "current_discount": {
+    "message": "Current Discount"
+  },
+  "historical_low": {
+    "message": "Historical Low"
+  },
+  "historical_low_discount": {
+    "message": "Historical Low Discount"
+  },
+  "last_historical_low_time": {
+    "message": "Last Historical Low Time"
+  },
+  "multi_country_price_comparison": {
+    "message": "Multi-country Price Comparison"
   }
 }
